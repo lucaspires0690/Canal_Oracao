@@ -343,11 +343,11 @@ textarea#resultado-prompt {
   align-items: center;
 }
 
-.item-canal .nome { font-weight: 600; }
-.item-canal .meta { font-size: 0.78rem; color: var(--texto-fraco); }
+.item-canal .item-titulo { font-weight: 600; }
+.item-canal .item-meta { font-size: 0.78rem; color: var(--texto-fraco); }
 
-.item-historico .titulo { font-weight: 500; }
-.item-historico .meta { font-size: 0.78rem; color: var(--texto-fraco); }
+.item-historico .item-titulo { font-weight: 500; }
+.item-historico .item-meta { font-size: 0.78rem; color: var(--texto-fraco); }
 
 /* ============================================================ */
 /* RESPONSIVO */
