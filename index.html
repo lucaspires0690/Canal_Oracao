@@ -1,1 +1,221 @@
 
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Faith Prompt Engine — Canais de Oração</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<div class="app-wrapper">
+  
+  <!-- ============================================================ -->
+  <!-- TELA DE LOGIN -->
+  <!-- ============================================================ -->
+  <section id="tela-login" class="tela-login">
+    <div class="login-card">
+      <div class="login-brand">
+        <span class="badge">Faith Prompt Engine</span>
+        <h1>Canais de Oração</h1>
+        <p>Acesse com sua conta Google autorizada.</p>
+      </div>
+      <button id="btn-google-login" class="btn btn-primary btn-google">
+        <svg width="20" height="20" viewBox="0 0 18 18" aria-hidden="true">
+          <path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84c-.21 1.13-.85 2.09-1.81 2.73v2.27h2.92c1.71-1.57 2.69-3.88 2.69-6.64z"/>
+          <path fill="#34A853" d="M9 18c2.43 0 4.47-.81 5.96-2.18l-2.92-2.27c-.81.55-1.84.87-3.04.87-2.34 0-4.32-1.58-5.03-3.71H.96v2.33C2.44 15.98 5.48 18 9 18z"/>
+          <path fill="#FBBC05" d="M3.97 10.71c-.18-.55-.28-1.13-.28-1.71s.1-1.16.28-1.71V4.96H.96A8.997 8.997 0 0 0 0 9c0 1.45.35 2.83.96 4.04l3.01-2.33z"/>
+          <path fill="#EA4335" d="M9 3.58c1.32 0 2.5.45 3.44 1.35l2.58-2.58C13.46.89 11.43 0 9 0 5.48 0 2.44 2.02.96 4.96l3.01 2.33C4.68 5.16 6.66 3.58 9 3.58z"/>
+        </svg>
+        Entrar com Google
+      </button>
+      <p class="erro" id="login-erro"></p>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- APP PRINCIPAL -->
+  <!-- ============================================================ -->
+  <section id="tela-app" class="tela-app oculto">
+    
+    <!-- TOPO -->
+    <header class="topo">
+      <div class="topo-info">
+        <span class="badge">Faith Prompt Engine</span>
+        <h1>Canais de Oração</h1>
+      </div>
+      <div class="topo-acoes">
+        <button id="btn-voltar-dashboard" class="btn btn-ghost btn-sm oculto">← Voltar</button>
+        <button id="btn-logout" class="btn btn-ghost btn-sm">Sair</button>
+      </div>
+    </header>
+
+    <!-- ============================================================ -->
+    <!-- TELA 1: DASHBOARD (Lista de canais) -->
+    <!-- ============================================================ -->
+    <section id="tela-dashboard" class="tela-dashboard">
+      <div class="dashboard-header">
+        <h2>📂 Meus Canais</h2>
+        <button id="btn-criar-canal-dash" class="btn btn-primary btn-sm">➕ Criar canal</button>
+      </div>
+      <div id="lista-canais-dash" class="grid-canais">
+        <div class="empty-state">Nenhum canal criado ainda. Clique em "Criar canal" para começar.</div>
+      </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- TELA 2: DETALHE DO CANAL (Gerar + Histórico) -->
+    <!-- ============================================================ -->
+    <section id="tela-detalhe" class="tela-detalhe oculto">
+      
+      <!-- Cabeçalho do canal -->
+      <div class="detalhe-header">
+        <div>
+          <span class="badge" id="detalhe-badge">Canal</span>
+          <h2 id="detalhe-nome">Nome do Canal</h2>
+          <p class="detalhe-meta" id="detalhe-meta">🌅 Manhã · 🇧🇷 Português</p>
+        </div>
+        <div class="detalhe-stats">
+          <span id="detalhe-total">0 vídeos</span>
+        </div>
+      </div>
+
+      <!-- Abas internas do canal -->
+      <nav class="nav-aba-interna">
+        <button class="aba-interna ativa" data-aba="gerar">🎯 Gerar</button>
+        <button class="aba-interna" data-aba="historico">📜 Histórico</button>
+      </nav>
+
+      <!-- ============================================================ -->
+      <!-- ABA INTERNA: GERAR -->
+      <!-- ============================================================ -->
+      <div class="painel-interno ativo" data-painel="gerar">
+        
+        <div class="grid-2">
+          <!-- Título -->
+          <div class="cartao">
+            <label for="input-titulo">📝 Título do vídeo</label>
+            <div class="input-group">
+              <input type="text" id="input-titulo" placeholder="Digite ou gere um título..." />
+              <button id="btn-gerar-titulo" class="btn btn-secundario btn-sm" title="Gerar título com IA">✨</button>
+              <button id="btn-refazer-titulo" class="btn btn-secundario btn-sm" title="Refazer título">🔄</button>
+            </div>
+            <div class="titulo-status">
+              <span class="badge-status" id="badge-arquetipo">—</span>
+              <span id="video-counter">Vídeo #0</span>
+            </div>
+          </div>
+
+          <!-- Duração -->
+          <div class="cartao">
+            <label for="input-minutos">⏱️ Duração (min)</label>
+            <input type="number" id="input-minutos" min="1" step="0.5" value="10" />
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <!-- PPM -->
+          <div class="cartao">
+            <label for="input-ppm">🔊 Palavras/min (TTS)</label>
+            <input type="number" id="input-ppm" min="50" step="5" value="150" />
+          </div>
+          <!-- Espaço informativo -->
+          <div class="cartao" style="display: flex; flex-direction: column; justify-content: flex-end;">
+            <p style="color: var(--texto-fraco); font-size: 0.85rem; margin: 0;">
+              💡 Ajuste conforme a velocidade do seu TTS.
+            </p>
+          </div>
+        </div>
+
+        <button id="btn-gerar" class="btn btn-primary btn-lg">🚀 Gerar Prompt</button>
+        <p class="status" id="status-gerar"></p>
+
+        <!-- Resultado: Prompt -->
+        <div class="cartao oculto" id="cartao-resultado" style="flex: 1; min-height: 200px;">
+          <div class="cartao-header">
+            <h2>📋 Prompt pronto</h2>
+            <button id="btn-copiar" class="btn btn-ghost btn-sm">📄 Copiar</button>
+          </div>
+          <textarea id="resultado-prompt" readonly spellcheck="false" style="flex: 1; min-height: 180px;"></textarea>
+          <details>
+            <summary>📊 Parâmetros sorteados</summary>
+            <pre id="parametros-detalhe"></pre>
+          </details>
+        </div>
+
+        <!-- Resultado: Revisão -->
+        <div class="cartao oculto" id="cartao-revisao">
+          <div class="cartao-header">
+            <h2>🔁 Mensagem de revisão</h2>
+            <button id="btn-copiar-revisao" class="btn btn-ghost btn-sm">📄 Copiar</button>
+          </div>
+          <textarea id="resultado-revisao" readonly spellcheck="false"></textarea>
+        </div>
+
+      </div>
+
+      <!-- ============================================================ -->
+      <!-- ABA INTERNA: HISTÓRICO -->
+      <!-- ============================================================ -->
+      <div class="painel-interno" data-painel="historico">
+        <div class="cartao" style="flex: 1;">
+          <div class="cartao-header">
+            <h2>📜 Histórico do canal</h2>
+            <button id="btn-recarregar-historico" class="btn btn-ghost btn-sm">↻ Recarregar</button>
+          </div>
+          <div id="lista-historico" class="lista-historico" style="max-height: 400px;"></div>
+          <button id="btn-mais-historico" class="btn btn-secundario btn-sm oculto">Carregar mais</button>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- MODAL: CRIAR CANAL -->
+    <!-- ============================================================ -->
+    <div id="modal-canal" class="modal oculto">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>➕ Novo canal</h2>
+          <button id="btn-fechar-modal" class="btn btn-ghost btn-sm">✕</button>
+        </div>
+        <div class="modal-body">
+          <label for="input-nome-canal">Nome do canal</label>
+          <input type="text" id="input-nome-canal" placeholder="Ex.: Paz na Madrugada" />
+          
+          <div class="grid-2" style="margin-top: 12px;">
+            <div class="campo">
+              <label for="select-momento-canal">Momento</label>
+              <select id="select-momento-canal">
+                <option value="manha_disposicao">🌅 Manhã</option>
+                <option value="madrugada_ansiedade">🌙 Madrugada</option>
+                <option value="noite_sono">🌙 Noite</option>
+              </select>
+            </div>
+            <div class="campo">
+              <label for="select-idioma-canal">Idioma</label>
+              <select id="select-idioma-canal">
+                <option value="pt-BR">🇧🇷 Português</option>
+                <option value="en-US">🇺🇸 Inglês</option>
+                <option value="es-LA">🇪🇸 Espanhol</option>
+                <option value="fr">🇫🇷 Francês</option>
+                <option value="ko">🇰🇷 Coreano</option>
+              </select>
+            </div>
+          </div>
+          <button id="btn-criar-canal" class="btn btn-primary" style="width: 100%; margin-top: 16px;">Criar canal</button>
+          <p class="status" id="status-canal"></p>
+        </div>
+      </div>
+    </div>
+
+  </section>
+</div>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>
