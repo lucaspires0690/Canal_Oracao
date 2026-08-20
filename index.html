@@ -4,71 +4,73 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Faith Prompt Engine — Canais de Oração</title>
-  <meta name="description" content="Motor de geração de roteiros de oração por horário canônico." />
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23E2883A' d='M12 2s5 5.5 5 10a5 5 0 11-10 0c0-1.5.7-2.6 1.3-3.6.3.9 1 1.6 1.7 1.6-.3-2 .7-3.6 2-8z'/%3E%3C/svg%3E" />
+  <meta name="description" content="Motor de geração de roteiros de oração por canal." />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='6' fill='%234F46E5'/%3E%3Cpath d='M8 12h8M12 8v8' stroke='white' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300..700&family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <!--
+    Tema é controlado por [data-theme="light|dark"] na tag <html>.
+    Script inline no fim do body decide o valor inicial e cuida do toggle.
+    Isso é 100% separado do app.js (Firebase) — só cuida de aparência.
+  -->
+  <script>
+    (function () {
+      var salvo = localStorage.getItem("fpe-theme");
+      var tema = salvo || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+      document.documentElement.setAttribute("data-theme", tema);
+    })();
+  </script>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
 <!-- ============================================================ -->
-<!-- SPRITE DE ÍCONES — edite os paths aqui, usados em <use> abaixo -->
+<!-- SPRITE DE ÍCONES -->
 <!-- ============================================================ -->
 <svg class="icon-sprite" aria-hidden="true">
   <defs>
-    <symbol id="icon-flame" viewBox="0 0 24 24">
-      <path d="M12 2s5 5.5 5 10a5 5 0 11-10 0c0-1.5.7-2.6 1.3-3.6.3.9 1 1.6 1.7 1.6-.3-2 .7-3.6 2-8z" fill="currentColor"/>
+    <symbol id="icon-mark" viewBox="0 0 24 24">
+      <path d="M8 12h8M12 8v8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
     </symbol>
-    <symbol id="icon-sunrise" viewBox="0 0 24 24">
-      <path d="M12 3v4M4.6 10.4l1.4 1.4M19.4 10.4l-1.4 1.4M2.5 17.5h3M18.5 17.5h3M6.5 17.5a5.5 5.5 0 0111 0" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" fill="none"/>
-      <line x1="2.5" y1="20.5" x2="21.5" y2="20.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+    <symbol id="icon-sun" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.8" fill="none"/>
+      <path d="M12 2.5v2.5M12 19v2.5M4.2 4.2l1.8 1.8M18 18l1.8 1.8M2.5 12H5M19 12h2.5M4.2 19.8L6 18M18 6l1.8-1.8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
     </symbol>
-    <symbol id="icon-crescent" viewBox="0 0 24 24">
-      <path d="M15 4.2a7.8 7.8 0 100 15.6 8.3 8.3 0 01-5.8-9.3A8.3 8.3 0 0115 4.2z" fill="currentColor"/>
-      <path d="M19.3 4l.55 1.35L21.2 5.9l-1.35.55L19.3 7.8l-.55-1.35L17.4 5.9l1.35-.55L19.3 4z" fill="currentColor"/>
-    </symbol>
-    <symbol id="icon-moonstars" viewBox="0 0 24 24">
-      <circle cx="11" cy="12" r="6" stroke="currentColor" stroke-width="1.6" fill="none"/>
-      <circle cx="13.4" cy="9.4" r="0.9" fill="currentColor"/>
-      <circle cx="9.2" cy="14.6" r="0.7" fill="currentColor"/>
-      <path d="M18.6 5l.55 1.35L20.5 6.9l-1.35.55L18.6 8.8l-.55-1.35L16.7 6.9l1.35-.55L18.6 5z" fill="currentColor"/>
+    <symbol id="icon-moon" viewBox="0 0 24 24">
+      <path d="M20 14.5A8.5 8.5 0 1109.5 4a7 7 0 0010.5 10.5z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" fill="none"/>
     </symbol>
     <symbol id="icon-plus" viewBox="0 0 24 24">
-      <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+      <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
     </symbol>
     <symbol id="icon-arrow-left" viewBox="0 0 24 24">
-      <path d="M19 12H5M11 6l-6 6 6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      <path d="M19 12H5M11 6l-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
     </symbol>
     <symbol id="icon-copy" viewBox="0 0 24 24">
-      <rect x="8" y="8" width="12" height="12" rx="2" stroke="currentColor" stroke-width="1.6" fill="none"/>
-      <path d="M16 8V6a2 2 0 00-2-2H6a2 2 0 00-2 2v8a2 2 0 002 2h2" stroke="currentColor" stroke-width="1.6" fill="none"/>
+      <rect x="8" y="8" width="12" height="12" rx="2" stroke="currentColor" stroke-width="1.8" fill="none"/>
+      <path d="M16 8V6a2 2 0 00-2-2H6a2 2 0 00-2 2v8a2 2 0 002 2h2" stroke="currentColor" stroke-width="1.8" fill="none"/>
     </symbol>
     <symbol id="icon-sparkle" viewBox="0 0 24 24">
       <path d="M12 3l1.6 5.4L19 10l-5.4 1.6L12 17l-1.6-5.4L5 10l5.4-1.6L12 3z" fill="currentColor"/>
     </symbol>
     <symbol id="icon-refresh" viewBox="0 0 24 24">
-      <path d="M4 12a8 8 0 0114-5.3M20 12a8 8 0 01-14 5.3M4 4v5h5M20 20v-5h-5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      <path d="M4 12a8 8 0 0114-5.3M20 12a8 8 0 01-14 5.3M4 4v5h5M20 20v-5h-5" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
     </symbol>
     <symbol id="icon-close" viewBox="0 0 24 24">
-      <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+      <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
     </symbol>
     <symbol id="icon-logout" viewBox="0 0 24 24">
-      <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
     </symbol>
-    <symbol id="icon-scroll" viewBox="0 0 24 24">
-      <path d="M6 4h9a2 2 0 012 2v13a1 1 0 01-1.6.8L14 18l-1.4 1.8-1.4-1.8L9.8 19.8 8.4 18 7 19.8V6a2 2 0 00-2-2z" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linejoin="round"/>
-      <line x1="8" y1="8" x2="14" y2="8" stroke="currentColor" stroke-width="1.3"/>
-      <line x1="8" y1="11" x2="14" y2="11" stroke="currentColor" stroke-width="1.3"/>
+    <symbol id="icon-history" viewBox="0 0 24 24">
+      <path d="M3 12a9 9 0 109-9M3 12V6M3 12h6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      <path d="M12 8v4l3 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/>
     </symbol>
-    <symbol id="icon-quill" viewBox="0 0 24 24">
-      <path d="M20 4c-6 0-12 4-14 12l-2 4 4-2C16 16 20 10 20 4z" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linejoin="round"/>
-      <line x1="9" y1="15" x2="4" y2="20" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+    <symbol id="icon-align" viewBox="0 0 24 24">
+      <path d="M4 6h16M4 12h10M4 18h13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
     </symbol>
-    <symbol id="icon-clock" viewBox="0 0 24 24">
-      <circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="1.6" fill="none"/>
-      <path d="M12 7.5V12l3 2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" fill="none"/>
+    <symbol id="icon-folder" viewBox="0 0 24 24">
+      <path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" fill="none"/>
     </symbol>
   </defs>
 </svg>
@@ -79,15 +81,16 @@
   <!-- TELA DE LOGIN -->
   <!-- ============================================================ -->
   <section id="tela-login" class="auth-screen">
+    <button class="theme-toggle theme-toggle--floating" id="btn-theme-toggle-login" type="button" aria-label="Alternar tema">
+      <svg width="18" height="18" class="theme-icon-sun"><use href="#icon-sun"/></svg>
+      <svg width="18" height="18" class="theme-icon-moon"><use href="#icon-moon"/></svg>
+    </button>
     <div class="auth-card">
-      <div class="auth-glow" aria-hidden="true"></div>
-      <div class="auth-brand">
-        <span class="icon-badge"><svg width="22" height="22"><use href="#icon-flame"/></svg></span>
-        <span class="eyebrow">Faith Prompt Engine</span>
-        <h1>Canais de Oração</h1>
-        <p>Um espaço para preparar, com cuidado, a palavra de cada horário de oração.</p>
-      </div>
-      <button id="btn-google-login" class="btn btn-google">
+      <div class="mark-tile"><svg width="20" height="20"><use href="#icon-mark"/></svg></div>
+      <span class="eyebrow">Faith Prompt Engine</span>
+      <h1>Canais de Oração</h1>
+      <p class="auth-sub">Acesse com sua conta Google autorizada para gerenciar seus canais.</p>
+      <button id="btn-google-login" class="btn btn-google btn-block">
         <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
           <path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84c-.21 1.13-.85 2.09-1.81 2.73v2.27h2.92c1.71-1.57 2.69-3.88 2.69-6.64z"/>
           <path fill="#34A853" d="M9 18c2.43 0 4.47-.81 5.96-2.18l-2.92-2.27c-.81.55-1.84.87-3.04.87-2.34 0-4.32-1.58-5.03-3.71H.96v2.33C2.44 15.98 5.48 18 9 18z"/>
@@ -108,7 +111,7 @@
     <!-- TOPO -->
     <header class="top-bar">
       <div class="top-bar__brand">
-        <span class="icon-badge icon-badge--sm"><svg width="16" height="16"><use href="#icon-flame"/></svg></span>
+        <div class="mark-tile mark-tile--sm"><svg width="15" height="15"><use href="#icon-mark"/></svg></div>
         <div>
           <span class="eyebrow">Faith Prompt Engine</span>
           <h1>Canais de Oração</h1>
@@ -117,6 +120,10 @@
       <div class="top-bar__actions">
         <button id="btn-voltar-dashboard" class="btn btn-quiet btn-sm oculto">
           <svg width="16" height="16"><use href="#icon-arrow-left"/></svg> Voltar
+        </button>
+        <button class="theme-toggle" id="btn-theme-toggle-app" type="button" aria-label="Alternar tema">
+          <svg width="17" height="17" class="theme-icon-sun"><use href="#icon-sun"/></svg>
+          <svg width="17" height="17" class="theme-icon-moon"><use href="#icon-moon"/></svg>
         </button>
         <button id="btn-logout" class="btn btn-quiet btn-sm">
           <svg width="16" height="16"><use href="#icon-logout"/></svg> Sair
@@ -129,7 +136,7 @@
     <!-- ============================================================ -->
     <section id="tela-dashboard" class="screen-dashboard">
       <div class="screen-header">
-        <h2><svg width="18" height="18"><use href="#icon-clock"/></svg> Meus Canais</h2>
+        <h2><svg width="20" height="20"><use href="#icon-folder"/></svg> Meus Canais</h2>
         <button id="btn-criar-canal-dash" class="btn btn-primary btn-sm">
           <svg width="16" height="16"><use href="#icon-plus"/></svg> Criar canal
         </button>
@@ -162,10 +169,10 @@
           <svg width="15" height="15"><use href="#icon-sparkle"/></svg> Gerar
         </button>
         <button class="aba-interna" data-aba="historico">
-          <svg width="15" height="15"><use href="#icon-scroll"/></svg> Histórico
+          <svg width="15" height="15"><use href="#icon-history"/></svg> Histórico
         </button>
         <button class="aba-interna" data-aba="formatar">
-          <svg width="15" height="15"><use href="#icon-quill"/></svg> Formatar
+          <svg width="15" height="15"><use href="#icon-align"/></svg> Formatar
         </button>
       </nav>
 
@@ -212,8 +219,8 @@
           </div>
         </div>
 
-        <button id="btn-gerar" class="btn btn-primary btn-lg btn-generate">
-          <svg width="18" height="18"><use href="#icon-flame"/></svg> Gerar Prompt
+        <button id="btn-gerar" class="btn btn-primary btn-lg btn-block">
+          Gerar Prompt
         </button>
         <p class="status" id="status-gerar"></p>
 
@@ -262,14 +269,14 @@
       </div>
 
       <!-- ============================================================ -->
-      <!-- ABA INTERNA: FORMATAR (concluindo o recurso já existente no app.js) -->
+      <!-- ABA INTERNA: FORMATAR -->
       <!-- ============================================================ -->
       <div class="tab-panel painel-interno" data-painel="formatar">
         <div class="card">
           <label for="entrada-formatar">Cole o roteiro para dividir parágrafos longos</label>
           <textarea id="entrada-formatar" placeholder="Cole aqui o roteiro gerado pela IA..." rows="8"></textarea>
           <button id="btn-formatar" class="btn btn-primary">
-            <svg width="16" height="16"><use href="#icon-quill"/></svg> Formatar parágrafos
+            Formatar parágrafos
           </button>
           <p class="status" id="status-formatar"></p>
         </div>
@@ -331,6 +338,21 @@
   </section>
 </div>
 
+<script>
+  // Toggle de tema — isolado, não interfere no app.js (Firebase).
+  (function () {
+    function aplicar(tema) {
+      document.documentElement.setAttribute("data-theme", tema);
+      localStorage.setItem("fpe-theme", tema);
+    }
+    function alternar() {
+      var atual = document.documentElement.getAttribute("data-theme");
+      aplicar(atual === "dark" ? "light" : "dark");
+    }
+    document.getElementById("btn-theme-toggle-login")?.addEventListener("click", alternar);
+    document.getElementById("btn-theme-toggle-app")?.addEventListener("click", alternar);
+  })();
+</script>
 <script type="module" src="app.js"></script>
 </body>
 </html>
