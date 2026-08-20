@@ -112,7 +112,7 @@ onAuthStateChanged(auth, async (user) => {
   if (user && user.email === EMAIL_PERMITIDO) {
     telaLogin.classList.add("oculto");
     telaApp.classList.remove("oculto");
-    await carregarDados();
+    await carregarDados(user);
     carregarHistorico(true);
   } else if (user) {
     loginErro.textContent = `O e-mail ${user.email} não tem acesso a este app.`;
@@ -126,7 +126,7 @@ onAuthStateChanged(auth, async (user) => {
 // ============================================================
 // CARREGAR DADOS DO GITHUB E STORAGE
 // ============================================================
-async function carregarDados() {
+async function carregarDados(user) {
   try {
     const [trad, prompts, rules, titles] = await Promise.all([
       fetch(URL_TRANSLATIONS).then(r => r.json()),
@@ -139,9 +139,22 @@ async function carregarDados() {
     validatedRules = rules;
     rawTitles = titles;
     console.log("✅ Dados carregados do GitHub");
-    
-    // Carregar a Bíblia padrão (português)
-    await carregarBibliaDoStorage("pt-BR");
+
+    // Aguardar o token do usuário antes de carregar a Bíblia
+    if (user) {
+      try {
+        const token = await user.getIdToken();
+        console.log("✅ Token de autenticação obtido");
+        await carregarBibliaDoStorage("pt-BR");
+      } catch (tokenErr) {
+        console.warn("⚠️ Não foi possível obter token:", tokenErr);
+        // Tenta carregar mesmo assim (pode funcionar com regras públicas)
+        await carregarBibliaDoStorage("pt-BR");
+      }
+    } else {
+      console.warn("⚠️ Usuário não autenticado. Tentando carregar Bíblia mesmo assim...");
+      await carregarBibliaDoStorage("pt-BR");
+    }
   } catch (err) {
     console.error("❌ Erro ao carregar dados:", err);
     const status = document.getElementById("status-gerar");
@@ -158,6 +171,7 @@ async function carregarBibliaDoStorage(idioma) {
     const bibleRef = ref(storage, `bible_data/${fileName}`);
     const url = await getDownloadURL(bibleRef);
     const response = await fetch(url);
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
     biblia = await response.json();
     console.log(`✅ Bíblia carregada do Storage (${fileName})`);
     return true;
@@ -409,8 +423,13 @@ btnGerar.addEventListener("click", async () => {
   statusGerar.className = "status";
 
   try {
-    // Carregar a Bíblia no idioma selecionado
-    await carregarBibliaDoStorage(idioma);
+    // Carregar a Bíblia no idioma selecionado (se ainda não estiver carregada)
+    const currentUser = auth.currentUser;
+    if (currentUser) {
+      await carregarBibliaDoStorage(idioma);
+    } else {
+      console.warn("⚠️ Usuário não autenticado. Usando Bíblia padrão se disponível.");
+    }
 
     const langData = traducoes.languages?.[idioma] || {};
     const momentTemplates = traducoes.moment_templates || {};
