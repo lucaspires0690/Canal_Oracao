@@ -1,9 +1,5 @@
 // ============================================================
 // CONFIGURAÇÃO DO FIREBASE
-// Substitua os valores abaixo pelos do SEU projeto Firebase.
-// (Firebase Console > ⚙️ Configurações do projeto > Seus apps > SDK setup and configuration)
-// Esses valores NÃO são segredo — a segurança real vem das Regras do
-// Firestore + do login obrigatório, não de esconder este objeto.
 // ============================================================
 const firebaseConfig = {
   apiKey: "AIzaSyAo9tWzi30ts5y5cNxpwljzHk3pF44zth4",
@@ -39,19 +35,32 @@ import {
   writeBatch,
 } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
 
-import { TEMPLATE } from "./template.js";
-
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// ---------- constantes do motor (idênticas ao script Python) ----------
+// ---------- constantes do motor ----------
 const JANELA_REPETICAO = 6;
 const QTD_ARQUETIPOS_SUGERIDOS = 6;
 const QTD_CASOS_SUGERIDOS = 6;
-const PPM_PADRAO = 150; // palavras por minuto — referência de TTS, ajustável na tela
+const PPM_PADRAO = 150;
 
-// ---------- persistência local do PPM calibrado (não vai pro Firestore) ----------
+// ---------- URLs dos arquivos JSON no GitHub ----------
+const GITHUB_BASE = "https://raw.githubusercontent.com/lucaspires0690/meu_sistema_firebase/main/";
+const URL_TRANSLATIONS = GITHUB_BASE + "translations.json";
+const URL_SYSTEM_PROMPTS = GITHUB_BASE + "system_prompts.json";
+const URL_VALIDATED_RULES = GITHUB_BASE + "validated_rules.json";
+const URL_RAW_TITLES = GITHUB_BASE + "raw_titles.json";
+
+// ---------- estado global ----------
+let traducoes = null;
+let systemPrompts = null;
+let validatedRules = null;
+let rawTitles = null;
+let ultimoDocHistorico = null;
+const PAGINA_HISTORICO = 10;
+
+// ---------- persistência local do PPM ----------
 const inputPpm = document.getElementById("input-ppm");
 const ppmSalvo = localStorage.getItem("storyengine_ppm");
 if (ppmSalvo) inputPpm.value = ppmSalvo;
@@ -63,10 +72,6 @@ inputPpm.addEventListener("change", () => {
 // ============================================================
 // AUTENTICAÇÃO
 // ============================================================
-// Só este e-mail tem acesso ao app. Mesmo que alguém ache a URL e tente
-// logar com outra conta Google, ele é deslogado automaticamente — e a
-// regra do Firestore (firestore.rules) também bloqueia no banco de dados,
-// que é onde a proteção de verdade está.
 const EMAIL_PERMITIDO = "lucasserip1990@gmail.com";
 
 const telaLogin = document.getElementById("tela-login");
@@ -91,10 +96,9 @@ onAuthStateChanged(auth, async (user) => {
   if (user && user.email === EMAIL_PERMITIDO) {
     telaLogin.classList.add("oculto");
     telaApp.classList.remove("oculto");
-    carregarPools();
+    await carregarDados();
     carregarHistorico(true);
   } else if (user) {
-    // logou com uma conta Google diferente da autorizada
     loginErro.textContent = `O e-mail ${user.email} não tem acesso a este app.`;
     await signOut(auth);
   } else {
@@ -102,6 +106,29 @@ onAuthStateChanged(auth, async (user) => {
     telaLogin.classList.remove("oculto");
   }
 });
+
+// ============================================================
+// CARREGAR DADOS DO GITHUB
+// ============================================================
+async function carregarDados() {
+  try {
+    const [trad, prompts, rules, titles] = await Promise.all([
+      fetch(URL_TRANSLATIONS).then(r => r.json()),
+      fetch(URL_SYSTEM_PROMPTS).then(r => r.json()),
+      fetch(URL_VALIDATED_RULES).then(r => r.json()),
+      fetch(URL_RAW_TITLES).then(r => r.json())
+    ]);
+    traducoes = trad;
+    systemPrompts = prompts;
+    validatedRules = rules;
+    rawTitles = titles;
+    console.log("✅ Dados carregados do GitHub");
+  } catch (err) {
+    console.error("❌ Erro ao carregar dados:", err);
+    document.getElementById("status-gerar").textContent = "Erro ao carregar dados. Recarregue a página.";
+    document.getElementById("status-gerar").className = "status erro";
+  }
+}
 
 // ============================================================
 // NAVEGAÇÃO POR ABAS
@@ -122,9 +149,8 @@ document.querySelectorAll(".aba").forEach((botao) => {
 });
 
 // ============================================================
-// MOTOR DE GERAÇÃO — porte 1:1 das funções do gerar_prompt.py
+// MOTOR DE GERAÇÃO
 // ============================================================
-
 function itensUsadosRecentemente(historicoRecente, campo) {
   const usados = new Set();
   historicoRecente.forEach((r) => (r[campo] || []).forEach((item) => usados.add(item)));
@@ -139,8 +165,6 @@ function escolherNumeroSemRepetir(opcoes, historicoRecente, campo) {
 }
 
 function gerarDistribuicaoBlocos() {
-  // Varia a % de palavras por bloco em até ±15% do valor base,
-  // depois normaliza para a soma dar exatamente 100% — igual ao Python.
   const base = { B1: 10, B2: 12, B3: 33, B4: 10, B5: 11, B6: 12, B7: 12 };
   const variado = {};
   for (const bloco in base) {
@@ -168,7 +192,6 @@ function shuffle(array) {
 function escolherListaSemRepetir(pool, usadosRecentes, quantidade) {
   let disponiveis = pool.filter((item) => !usadosRecentes.has(item));
   if (disponiveis.length < quantidade) {
-    // o pool "esgotou" dentro da janela de repetição — recomeça o ciclo
     disponiveis = [...pool];
   }
   return shuffle(disponiveis).slice(0, quantidade);
@@ -191,21 +214,60 @@ function calcularPalavrasPorBloco(distribuicaoPct, palavrasAlvo) {
   return resultado;
 }
 
-function montarMensagemRevisao(params) {
-  return `Revise o roteiro que você acabou de escrever para este vídeo, sem reescrevê-lo do zero — corrija apenas o que estiver fora do esperado:
+function montarMensagemRevisao(params, langData) {
+  const base = langData?.instructions?.revision_message || "Revise o roteiro que você acabou de escrever para este vídeo";
+  return `${base}:
 
-1. Contagem de palavras: confira se o roteiro tem entre ${params.palavrasMin} e ${params.palavrasMax} palavras. Se estiver abaixo de ${params.palavrasMin}, expanda as partes mais fracas (mais detalhe sensorial, mais profundidade no Bloco 3 ou no encerramento).
-2. Parágrafos: nenhum parágrafo pode ter mais de 3 frases. Quebre qualquer parágrafo mais longo em parágrafos menores, mantendo o conteúdo e a ordem das frases.
-3. Humor situacional: confirme se existem pelo menos ${params.humorMin} momentos de humor (comparação irônica entre o comportamento ancestral e o moderno) distribuídos ao longo do roteiro, não concentrados num só trecho. Se faltar, adicione.
-4. Micro-histórias: confirme se existem entre 3 e 5 micro-histórias (cenas concretas de um indivíduo ou grupo), cada uma com 30 a 80 palavras. Se houver menos de 3, ou se alguma passar de 80 palavras, ajuste.
+1. Contagem de palavras: confira se o roteiro tem entre ${params.palavrasMin} e ${params.palavrasMax} palavras.
+2. Parágrafos: nenhum parágrafo pode ter mais de 3 frases.
+3. Humor/consolo: confirme se existem pelo menos ${params.humorMin} momentos de consolo distribuídos.
+4. Versículos: confirme que os versículos sugeridos estão corretos (use {{VERSICULO}} como marcador).
+5. Tom: o tom deve ser acolhedor, compassivo e nunca de acusação ou medo.
 
-Entregue apenas o roteiro corrigido e completo. Sem comentários sobre o que foi revisado, sem explicações, sem marcação de blocos.`;
+Entregue apenas o roteiro corrigido e completo. Sem comentários sobre o que foi revisado.`;
 }
 
-function montarPrompt(params) {
-  let texto = TEMPLATE;
-  const substituicoes = {
-    "<<TITULO>>": params.titulo,
+function montarPrompt(params, langData, templateBlocos) {
+  const inst = langData?.instructions || {};
+  let texto = "";
+
+  texto += (inst.system_prompt || "") + "\n\n";
+  texto += (inst.channel_identity || "") + "\n\n";
+  texto += (inst.focus || "") + "\n\n";
+  texto += (inst.narrative_objective || "") + "\n\n";
+  texto += (inst.title_placeholder || "🎬 TÍTULO DESTE VÍDEO\n\n\"<<TITULO>>\"").replace("<<TITULO>>", params.titulo) + "\n\n";
+  texto += (inst.analysis_step || "") + "\n\n";
+  texto += (inst.word_count || "") + "\n\n";
+  texto += (inst.structural_variation || "") + "\n\n";
+
+  texto += "🧱 ESTRUTURA NARRATIVA — 7 BLOCOS (obrigatória)\n\n";
+  if (templateBlocos) {
+    const blocos = templateBlocos.split("\n");
+    for (const bloco of blocos) {
+      if (bloco.trim()) texto += bloco + "\n";
+    }
+  }
+  texto += "\n" + (inst.forbidden_absolutes || "") + "\n\n";
+  texto += (inst.tts_format || "") + "\n\n";
+
+  texto += `✅ VERIFICAÇÃO PROGRESSIVA DE PALAVRAS
+
+Cada bloco tem um alvo de palavras. Ao terminar de escrever cada bloco, estime quantas palavras esse bloco tem.
+
+Antes de entregar a resposta final, confirme que o texto final realmente contém:
+- Pelo menos ${params.perguntasMin} perguntas retóricas
+- Pelo menos ${params.humorMin} momentos de consolo/declarações de paz
+- Pelo menos 2 versículos bíblicos (via {{VERSICULO}})
+- Nenhum parágrafo com mais de 3 frases
+- Tom acolhedor e compassivo
+
+Se o total geral passar de ${params.palavrasMax} palavras, corte o excesso sem perder as regras obrigatórias.
+`;
+
+  texto += "\n" + (inst.final_output || "📤 SAÍDA FINAL\n\nExecute todas as regras acima e entregue apenas o roteiro final.\n\nAgora, escreva o roteiro para o título: <<TITULO>>").replace("<<TITULO>>", params.titulo);
+
+  // Substituir placeholders numéricos
+  const substitutos = {
     "<<MINUTOS>>": String(params.minutos),
     "<<PPM>>": String(params.ppm),
     "<<PALAVRAS_ALVO>>": String(params.palavrasAlvo),
@@ -228,12 +290,13 @@ function montarPrompt(params) {
     "<<PALAVRAS_B5>>": String(params.palavrasPorBloco.B5),
     "<<PALAVRAS_B6>>": String(params.palavrasPorBloco.B6),
     "<<PALAVRAS_B7>>": String(params.palavrasPorBloco.B7),
-    "<<ARQUETIPOS_EVITAR>>": params.arquetipos_evitar.map((a) => `- ${a}`).join("\n"),
-    "<<CASOS_EVITAR>>": params.casos_evitar.map((c) => `- ${c}`).join("\n"),
+    "<<ARQUETIPOS_EVITAR>>": (params.arquetipos_evitar || []).map(a => `- ${a}`).join("\n"),
+    "<<CASOS_EVITAR>>": (params.casos_evitar || []).map(c => `- ${c}`).join("\n"),
   };
-  for (const [chave, valor] of Object.entries(substituicoes)) {
+  for (const [chave, valor] of Object.entries(substitutos)) {
     texto = texto.replaceAll(chave, valor);
   }
+
   return texto;
 }
 
@@ -241,6 +304,8 @@ function montarPrompt(params) {
 // ABA: GERAR PROMPT
 // ============================================================
 const inputTitulo = document.getElementById("input-titulo");
+const selectMomento = document.getElementById("select-momento");
+const selectIdioma = document.getElementById("select-idioma");
 const btnGerar = document.getElementById("btn-gerar");
 const statusGerar = document.getElementById("status-gerar");
 const cartaoResultado = document.getElementById("cartao-resultado");
@@ -253,6 +318,8 @@ const btnCopiarRevisao = document.getElementById("btn-copiar-revisao");
 
 btnGerar.addEventListener("click", async () => {
   const titulo = inputTitulo.value.trim();
+  const momento = selectMomento.value;
+  const idioma = selectIdioma.value;
   const minutos = parseFloat(document.getElementById("input-minutos").value);
   const ppm = parseFloat(document.getElementById("input-ppm").value) || PPM_PADRAO;
 
@@ -266,14 +333,20 @@ btnGerar.addEventListener("click", async () => {
     statusGerar.className = "status erro";
     return;
   }
+  if (!traducoes || !systemPrompts) {
+    statusGerar.textContent = "Dados ainda não carregados. Aguarde...";
+    statusGerar.className = "status erro";
+    return;
+  }
+
   btnGerar.disabled = true;
   statusGerar.textContent = "Gerando...";
   statusGerar.className = "status";
+
   try {
-    const poolsSnap = await getDoc(doc(db, "pools", "default"));
-    const pools = poolsSnap.exists()
-      ? poolsSnap.data()
-      : { arquetipos_personagens: [], casos_historicos: [] };
+    const langData = traducoes.languages?.[idioma] || {};
+    const momentTemplates = traducoes.moment_templates || {};
+    const templateBlocos = momentTemplates[momento]?.[idioma] || momentTemplates[momento]?.["pt-BR"] || "";
 
     const histSnap = await getDocs(
       query(collection(db, "historico"), orderBy("criadoEm", "desc"), limit(JANELA_REPETICAO))
@@ -286,25 +359,42 @@ btnGerar.addEventListener("click", async () => {
     const duracao = calcularParametrosDeDuracao(minutos, ppm);
     const distribuicao = gerarDistribuicaoBlocos();
 
+    // Pool de palavras dos títulos brutos
+    let poolsArquetipos = ["ansiedade", "medo", "solidão", "preocupação", "insônia", "desânimo", "cansaço", "dúvida"];
+    let poolsCasos = ["Salmo 91", "Salmo 23", "Mateus 11:28", "Filipenses 4:6-7", "Isaías 41:10", "João 14:27"];
+
+    if (rawTitles) {
+      const todasPalavras = [];
+      for (const canal of Object.values(rawTitles)) {
+        for (const fase of ["antigos", "recentes", "virais"]) {
+          for (const item of (canal[fase] || [])) {
+            const palavras = (item.title || "").toLowerCase().split(/\s+/);
+            todasPalavras.push(...palavras);
+          }
+        }
+      }
+      if (todasPalavras.length > 0) {
+        const contagem = {};
+        for (const p of todasPalavras) {
+          if (p.length > 3) contagem[p] = (contagem[p] || 0) + 1;
+        }
+        const ordenadas = Object.entries(contagem).sort((a, b) => b[1] - a[1]);
+        const top10 = ordenadas.slice(0, 10).map(([p]) => p);
+        if (top10.length > 0) poolsArquetipos = top10;
+      }
+    }
+
     const params = {
       titulo,
       ...duracao,
       limite_anafora: escolherNumeroSemRepetir([2, 3, 4], historicoRecente, "limite_anafora"),
       distribuicao,
       palavrasPorBloco: calcularPalavrasPorBloco(distribuicao, duracao.palavrasAlvo),
-      arquetipos_evitar: escolherListaSemRepetir(
-        pools.arquetipos_personagens || [],
-        arquetiposUsadosRecentes,
-        QTD_ARQUETIPOS_SUGERIDOS
-      ),
-      casos_evitar: escolherListaSemRepetir(
-        pools.casos_historicos || [],
-        casosUsadosRecentes,
-        QTD_CASOS_SUGERIDOS
-      ),
+      arquetipos_evitar: escolherListaSemRepetir(poolsArquetipos, arquetiposUsadosRecentes, QTD_ARQUETIPOS_SUGERIDOS),
+      casos_evitar: escolherListaSemRepetir(poolsCasos, casosUsadosRecentes, QTD_CASOS_SUGERIDOS),
     };
 
-    const promptFinal = montarPrompt(params);
+    const promptFinal = montarPrompt(params, langData, templateBlocos);
     resultadoPrompt.value = promptFinal;
     parametrosDetalhe.textContent = JSON.stringify(
       {
@@ -317,6 +407,8 @@ btnGerar.addEventListener("click", async () => {
         humor_min: params.humorMin,
         limite_anafora: params.limite_anafora,
         distribuicao_blocos: params.distribuicao,
+        momento,
+        idioma,
         arquetipos_evitar: params.arquetipos_evitar,
         casos_evitar: params.casos_evitar,
       },
@@ -325,7 +417,8 @@ btnGerar.addEventListener("click", async () => {
     );
     cartaoResultado.classList.remove("oculto");
 
-    resultadoRevisao.value = montarMensagemRevisao(params);
+    const revisao = montarMensagemRevisao(params, langData);
+    resultadoRevisao.value = revisao;
     cartaoRevisao.classList.remove("oculto");
 
     await addDoc(collection(db, "historico"), {
@@ -335,6 +428,8 @@ btnGerar.addEventListener("click", async () => {
       palavras_alvo: params.palavrasAlvo,
       limite_anafora: params.limite_anafora,
       distribuicao_blocos: params.distribuicao,
+      momento,
+      idioma,
       arquetipos_usados: params.arquetipos_evitar.slice(0, 3),
       casos_usados: params.casos_evitar.slice(0, 3),
     });
@@ -380,108 +475,8 @@ btnCopiarRevisao.addEventListener("click", async () => {
 });
 
 // ============================================================
-// ABA: BANCOS (POOLS)
-// ============================================================
-let poolsAtual = { arquetipos_personagens: [], casos_historicos: [] };
-
-async function carregarPools() {
-  const snap = await getDoc(doc(db, "pools", "default"));
-  poolsAtual = snap.exists()
-    ? snap.data()
-    : { arquetipos_personagens: [], casos_historicos: [] };
-  if (!poolsAtual.arquetipos_personagens) poolsAtual.arquetipos_personagens = [];
-  if (!poolsAtual.casos_historicos) poolsAtual.casos_historicos = [];
-  renderizarLista("arquetipos_personagens");
-  renderizarLista("casos_historicos");
-}
-
-function renderizarLista(campo) {
-  const container =
-    campo === "arquetipos_personagens"
-      ? document.getElementById("lista-arquetipos")
-      : document.getElementById("lista-casos");
-  container.innerHTML = "";
-  poolsAtual[campo].forEach((item, indice) => {
-    const linha = document.createElement("div");
-    linha.className = "item-lista";
-    const texto = document.createElement("span");
-    texto.textContent = item;
-    const btnRemover = document.createElement("button");
-    btnRemover.textContent = "Remover";
-    btnRemover.addEventListener("click", () => removerItemPool(campo, indice));
-    linha.appendChild(texto);
-    linha.appendChild(btnRemover);
-    container.appendChild(linha);
-  });
-}
-
-async function salvarPools(mensagem) {
-  await setDoc(doc(db, "pools", "default"), poolsAtual);
-  const statusPools = document.getElementById("status-pools");
-  statusPools.textContent = mensagem || "Salvo.";
-  statusPools.className = "status sucesso";
-}
-
-async function removerItemPool(campo, indice) {
-  poolsAtual[campo].splice(indice, 1);
-  renderizarLista(campo);
-  await salvarPools("Item removido.");
-}
-
-document.getElementById("btn-add-arquetipo").addEventListener("click", async () => {
-  const input = document.getElementById("novo-arquetipo");
-  const valor = input.value.trim();
-  if (!valor) return;
-  poolsAtual.arquetipos_personagens.push(valor);
-  input.value = "";
-  renderizarLista("arquetipos_personagens");
-  await salvarPools("Arquétipo adicionado.");
-});
-
-document.getElementById("btn-add-caso").addEventListener("click", async () => {
-  const input = document.getElementById("novo-caso");
-  const valor = input.value.trim();
-  if (!valor) return;
-  poolsAtual.casos_historicos.push(valor);
-  input.value = "";
-  renderizarLista("casos_historicos");
-  await salvarPools("Caso adicionado.");
-});
-
-// ---------- importação única de pools.json ----------
-document.getElementById("btn-importar-pools").addEventListener("click", async () => {
-  const arquivoInput = document.getElementById("arquivo-pools");
-  const statusImportarPools = document.getElementById("status-importar-pools");
-  if (!arquivoInput.files.length) {
-    statusImportarPools.textContent = "Escolha um arquivo pools.json primeiro.";
-    statusImportarPools.className = "status erro";
-    return;
-  }
-  try {
-    const texto = await arquivoInput.files[0].text();
-    const dados = JSON.parse(texto);
-    poolsAtual = {
-      arquetipos_personagens: dados.arquetipos_personagens || [],
-      casos_historicos: dados.casos_historicos || [],
-    };
-    await salvarPools();
-    renderizarLista("arquetipos_personagens");
-    renderizarLista("casos_historicos");
-    statusImportarPools.textContent = "pools.json importado com sucesso.";
-    statusImportarPools.className = "status sucesso";
-  } catch (err) {
-    console.error(err);
-    statusImportarPools.textContent = "Erro ao importar: arquivo inválido.";
-    statusImportarPools.className = "status erro";
-  }
-});
-
-// ============================================================
 // ABA: HISTÓRICO
 // ============================================================
-let ultimoDocHistorico = null;
-const PAGINA_HISTORICO = 10;
-
 function escaparHtml(texto) {
   const div = document.createElement("div");
   div.textContent = texto;
@@ -511,16 +506,13 @@ async function carregarHistorico(reiniciar = false) {
     const r = docSnap.data();
     const item = document.createElement("div");
     item.className = "item-historico";
-    const dataFormatada =
-      r.criadoEm && r.criadoEm.toDate ? r.criadoEm.toDate().toLocaleString("pt-BR") : "—";
-    const duracaoTexto = r.minutos
-      ? `${r.minutos} min (${r.palavras_alvo ?? "?"} palavras) · `
-      : "";
+    const dataFormatada = r.criadoEm?.toDate?.()?.toLocaleString?.("pt-BR") || "—";
+    const momentoLabel = r.momento || "—";
+    const idiomaLabel = r.idioma || "—";
+    const duracaoTexto = r.minutos ? `${r.minutos} min (${r.palavras_alvo || "?"} palavras) · ` : "";
     item.innerHTML = `
       <div class="item-titulo">${escaparHtml(r.titulo || "(sem título)")}</div>
-      <div class="item-meta">${dataFormatada} · ${duracaoTexto}anáfora ${r.limite_anafora ?? "—"} · arquétipos: ${escaparHtml(
-      (r.arquetipos_usados || []).join(", ")
-    )} · casos: ${escaparHtml((r.casos_usados || []).join(", "))}</div>
+      <div class="item-meta">${dataFormatada} · ${duracaoTexto}${momentoLabel} · ${idiomaLabel} · anáfora ${r.limite_anafora ?? "—"} · arquétipos: ${escaparHtml((r.arquetipos_usados || []).join(", "))}</div>
     `;
     lista.appendChild(item);
   });
@@ -533,58 +525,10 @@ async function carregarHistorico(reiniciar = false) {
 document.getElementById("btn-recarregar-historico").addEventListener("click", () => carregarHistorico(true));
 document.getElementById("btn-mais-historico").addEventListener("click", () => carregarHistorico(false));
 
-// ---------- importação única de historico_roteiros.json ----------
-document.getElementById("btn-importar-historico").addEventListener("click", async () => {
-  const arquivoInput = document.getElementById("arquivo-historico");
-  const statusImportarHistorico = document.getElementById("status-importar-historico");
-  if (!arquivoInput.files.length) {
-    statusImportarHistorico.textContent = "Escolha um arquivo historico_roteiros.json primeiro.";
-    statusImportarHistorico.className = "status erro";
-    return;
-  }
-  try {
-    const texto = await arquivoInput.files[0].text();
-    const dados = JSON.parse(texto);
-    const roteiros = dados.roteiros || [];
-    let lote = writeBatch(db);
-    let contador = 0;
-    for (const r of roteiros) {
-      const novaRef = doc(collection(db, "historico"));
-      const dataRegistro = r.data ? Timestamp.fromDate(new Date(r.data)) : serverTimestamp();
-      lote.set(novaRef, {
-        titulo: r.titulo || null,
-        criadoEm: dataRegistro,
-        limite_anafora: r.limite_anafora ?? null,
-        distribuicao_blocos: r.distribuicao_blocos || null,
-        arquetipos_usados: r.arquetipos_usados || [],
-        casos_usados: r.casos_usados || [],
-      });
-      contador++;
-      if (contador % 450 === 0) {
-        await lote.commit();
-        lote = writeBatch(db);
-      }
-    }
-    await lote.commit();
-    statusImportarHistorico.textContent = `${contador} roteiro(s) importado(s) com sucesso.`;
-    statusImportarHistorico.className = "status sucesso";
-    carregarHistorico(true);
-  } catch (err) {
-    console.error(err);
-    statusImportarHistorico.textContent = "Erro ao importar: arquivo inválido.";
-    statusImportarHistorico.className = "status erro";
-  }
-});
-
 // ============================================================
-// ABA: FORMATAR PARÁGRAFOS (puro processamento de texto, sem IA)
+// ABA: FORMATAR PARÁGRAFOS
 // ============================================================
-
 function dividirEmFrases(paragrafo) {
-  // Quebra em frases no fim de . ! ou ?, seguido de espaço e do início de
-  // uma nova frase (letra maiúscula, número, aspas ou travessão).
-  // Isso evita quebrar números como "300.000" (sem espaço depois do ponto)
-  // e evita tratar reticências seguidas de minúscula como fim de frase.
   const partes = paragrafo.split(/(?<=[.!?])\s+(?=[A-ZÀ-Ý0-9"“(\u2014\u2013])/);
   return partes.map((p) => p.trim()).filter(Boolean);
 }
@@ -594,10 +538,8 @@ function formatarParagrafos(texto, maxFrasesPorParagrafo = 3) {
     .split(/\n+/)
     .map((p) => p.trim())
     .filter(Boolean);
-
   const paragrafosFinais = [];
   let totalAjustados = 0;
-
   for (const paragrafo of paragrafosOriginais) {
     const frases = dividirEmFrases(paragrafo);
     if (frases.length <= maxFrasesPorParagrafo) {
@@ -609,7 +551,6 @@ function formatarParagrafos(texto, maxFrasesPorParagrafo = 3) {
       paragrafosFinais.push(frases.slice(i, i + maxFrasesPorParagrafo).join(" "));
     }
   }
-
   return {
     textoFormatado: paragrafosFinais.join("\n"),
     totalAjustados,
