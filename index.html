@@ -4,88 +4,26 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Faith Prompt Engine — Canais de Oração</title>
-  <meta name="description" content="Motor de geração de roteiros de oração por canal." />
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='6' fill='%234338CA'/%3E%3Cpath d='M8 12h8M12 8v8' stroke='white' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
-  <script>
-    (function () {
-      var salvo = localStorage.getItem("fpe-theme");
-      var tema = salvo || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
-      document.documentElement.setAttribute("data-theme", tema);
-    })();
-  </script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
-<!-- ============================================================ -->
-<!-- SPRITE DE ÍCONES -->
-<!-- ============================================================ -->
-<svg class="icon-sprite" aria-hidden="true">
-  <defs>
-    <symbol id="icon-mark" viewBox="0 0 24 24">
-      <path d="M8 12h8M12 8v8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-    </symbol>
-    <symbol id="icon-sun" viewBox="0 0 24 24">
-      <circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.8" fill="none"/>
-      <path d="M12 2.5v2.5M12 19v2.5M4.2 4.2l1.8 1.8M18 18l1.8 1.8M2.5 12H5M19 12h2.5M4.2 19.8L6 18M18 6l1.8-1.8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-    </symbol>
-    <symbol id="icon-moon" viewBox="0 0 24 24">
-      <path d="M20 14.5A8.5 8.5 0 1109.5 4a7 7 0 0010.5 10.5z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" fill="none"/>
-    </symbol>
-    <symbol id="icon-plus" viewBox="0 0 24 24">
-      <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-    </symbol>
-    <symbol id="icon-arrow-left" viewBox="0 0 24 24">
-      <path d="M19 12H5M11 6l-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-    </symbol>
-    <symbol id="icon-copy" viewBox="0 0 24 24">
-      <rect x="8" y="8" width="12" height="12" rx="2" stroke="currentColor" stroke-width="1.8" fill="none"/>
-      <path d="M16 8V6a2 2 0 00-2-2H6a2 2 0 00-2 2v8a2 2 0 002 2h2" stroke="currentColor" stroke-width="1.8" fill="none"/>
-    </symbol>
-    <symbol id="icon-sparkle" viewBox="0 0 24 24">
-      <path d="M12 3l1.6 5.4L19 10l-5.4 1.6L12 17l-1.6-5.4L5 10l5.4-1.6L12 3z" fill="currentColor"/>
-    </symbol>
-    <symbol id="icon-refresh" viewBox="0 0 24 24">
-      <path d="M4 12a8 8 0 0114-5.3M20 12a8 8 0 01-14 5.3M4 4v5h5M20 20v-5h-5" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-    </symbol>
-    <symbol id="icon-close" viewBox="0 0 24 24">
-      <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-    </symbol>
-    <symbol id="icon-logout" viewBox="0 0 24 24">
-      <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-    </symbol>
-    <symbol id="icon-history" viewBox="0 0 24 24">
-      <path d="M3 12a9 9 0 109-9M3 12V6M3 12h6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-      <path d="M12 8v4l3 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/>
-    </symbol>
-    <symbol id="icon-align" viewBox="0 0 24 24">
-      <path d="M4 6h16M4 12h10M4 18h13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-    </symbol>
-    <symbol id="icon-folder" viewBox="0 0 24 24">
-      <path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" fill="none"/>
-    </symbol>
-  </defs>
-</svg>
-
-<div class="app-shell">
-
+<div class="app-wrapper">
+  
   <!-- ============================================================ -->
   <!-- TELA DE LOGIN -->
   <!-- ============================================================ -->
-  <section id="tela-login" class="auth-screen">
-    <button class="theme-toggle theme-toggle--floating" id="btn-theme-toggle-login" type="button" aria-label="Alternar tema">
-      <svg width="20" height="20" class="theme-icon-sun"><use href="#icon-sun"/></svg>
-      <svg width="20" height="20" class="theme-icon-moon"><use href="#icon-moon"/></svg>
-    </button>
-    <div class="auth-card">
-      <div class="mark-tile"><svg width="24" height="24"><use href="#icon-mark"/></svg></div>
-      <span class="eyebrow">Faith Prompt Engine</span>
-      <h1>Canais de Oração</h1>
-      <p class="auth-sub">Acesse com sua conta Google autorizada para gerenciar seus canais.</p>
-      <button id="btn-google-login" class="btn btn-google btn-block">
+  <section id="tela-login" class="tela-login">
+    <div class="login-card">
+      <div class="login-brand">
+        <span class="badge">Faith Prompt Engine</span>
+        <h1>Canais de Oração</h1>
+        <p>Acesse com sua conta Google autorizada.</p>
+      </div>
+      <button id="btn-google-login" class="btn btn-primary btn-google">
         <svg width="20" height="20" viewBox="0 0 18 18" aria-hidden="true">
           <path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84c-.21 1.13-.85 2.09-1.81 2.73v2.27h2.92c1.71-1.57 2.69-3.88 2.69-6.64z"/>
           <path fill="#34A853" d="M9 18c2.43 0 4.47-.81 5.96-2.18l-2.92-2.27c-.81.55-1.84.87-3.04.87-2.34 0-4.32-1.58-5.03-3.71H.96v2.33C2.44 15.98 5.48 18 9 18z"/>
@@ -94,153 +32,125 @@
         </svg>
         Entrar com Google
       </button>
-      <p class="field-error" id="login-erro"></p>
+      <p class="erro" id="login-erro"></p>
     </div>
   </section>
 
   <!-- ============================================================ -->
   <!-- APP PRINCIPAL -->
   <!-- ============================================================ -->
-  <section id="tela-app" class="workspace oculto">
-
+  <section id="tela-app" class="tela-app oculto">
+    
     <!-- TOPO -->
-    <header class="top-bar">
-      <div class="top-bar__brand">
-        <div class="mark-tile mark-tile--sm"><svg width="18" height="18"><use href="#icon-mark"/></svg></div>
-        <div>
-          <span class="eyebrow">Faith Prompt Engine</span>
-          <h1>Canais de Oração</h1>
-        </div>
+    <header class="topo">
+      <div class="topo-info">
+        <span class="badge">Faith Prompt Engine</span>
+        <h1>Canais de Oração</h1>
       </div>
-      <div class="top-bar__actions">
-        <button id="btn-voltar-dashboard" class="btn btn-quiet btn-sm oculto">
-          <svg width="18" height="18"><use href="#icon-arrow-left"/></svg> Voltar
-        </button>
-        <button class="theme-toggle" id="btn-theme-toggle-app" type="button" aria-label="Alternar tema">
-          <svg width="19" height="19" class="theme-icon-sun"><use href="#icon-sun"/></svg>
-          <svg width="19" height="19" class="theme-icon-moon"><use href="#icon-moon"/></svg>
-        </button>
-        <button id="btn-logout" class="btn btn-quiet btn-sm">
-          <svg width="18" height="18"><use href="#icon-logout"/></svg> Sair
-        </button>
+      <div class="topo-acoes">
+        <button id="btn-voltar-dashboard" class="btn btn-ghost btn-sm oculto">← Voltar</button>
+        <button id="btn-logout" class="btn btn-ghost btn-sm">Sair</button>
       </div>
     </header>
 
     <!-- ============================================================ -->
     <!-- TELA 1: DASHBOARD (Lista de canais) -->
     <!-- ============================================================ -->
-    <section id="tela-dashboard" class="screen-dashboard">
-      <div class="screen-header">
-        <h2><svg width="24" height="24"><use href="#icon-folder"/></svg> Meus Canais</h2>
-        <button id="btn-criar-canal-dash" class="btn btn-primary btn-sm">
-          <svg width="18" height="18"><use href="#icon-plus"/></svg> Criar canal
-        </button>
+    <section id="tela-dashboard" class="tela-dashboard">
+      <div class="dashboard-header">
+        <h2>📂 Meus Canais</h2>
+        <button id="btn-criar-canal-dash" class="btn btn-primary btn-sm">➕ Criar canal</button>
       </div>
-      <div id="lista-canais-dash" class="channel-grid">
+      <div id="lista-canais-dash" class="grid-canais">
         <div class="empty-state">Nenhum canal criado ainda. Clique em "Criar canal" para começar.</div>
       </div>
     </section>
 
     <!-- ============================================================ -->
-    <!-- TELA 2: DETALHE DO CANAL (Gerar + Histórico + Formatar) -->
+    <!-- TELA 2: DETALHE DO CANAL (Gerar + Histórico) -->
     <!-- ============================================================ -->
-    <section id="tela-detalhe" class="screen-channel oculto">
-
+    <section id="tela-detalhe" class="tela-detalhe oculto">
+      
       <!-- Cabeçalho do canal -->
-      <div class="channel-header">
+      <div class="detalhe-header">
         <div>
-          <span class="badge-pill" id="detalhe-badge">Canal</span>
+          <span class="badge" id="detalhe-badge">Canal</span>
           <h2 id="detalhe-nome">Nome do Canal</h2>
-          <p class="channel-header__meta" id="detalhe-meta">Manhã · Português</p>
+          <p class="detalhe-meta" id="detalhe-meta">🌅 Manhã · 🇧🇷 Português</p>
         </div>
-        <div class="channel-header__stats">
+        <div class="detalhe-stats">
           <span id="detalhe-total">0 vídeos</span>
         </div>
       </div>
 
       <!-- Abas internas do canal -->
-      <nav class="tab-nav">
-        <button class="aba-interna ativa" data-aba="gerar">
-          <svg width="20" height="20"><use href="#icon-sparkle"/></svg> Gerar
-        </button>
-        <button class="aba-interna" data-aba="historico">
-          <svg width="20" height="20"><use href="#icon-history"/></svg> Histórico
-        </button>
-        <button class="aba-interna" data-aba="formatar">
-          <svg width="20" height="20"><use href="#icon-align"/></svg> Formatar
-        </button>
+      <nav class="nav-aba-interna">
+        <button class="aba-interna ativa" data-aba="gerar">🎯 Gerar</button>
+        <button class="aba-interna" data-aba="historico">📜 Histórico</button>
       </nav>
 
       <!-- ============================================================ -->
       <!-- ABA INTERNA: GERAR -->
       <!-- ============================================================ -->
-      <div class="tab-panel painel-interno ativo" data-painel="gerar">
-
-        <div class="field-grid">
+      <div class="painel-interno ativo" data-painel="gerar">
+        
+        <div class="grid-2">
           <!-- Título -->
-          <div class="card">
-            <label for="input-titulo">Título do vídeo</label>
-            <div class="input-row">
+          <div class="cartao">
+            <label for="input-titulo">📝 Título do vídeo</label>
+            <div class="input-group">
               <input type="text" id="input-titulo" placeholder="Digite ou gere um título..." />
-              <button id="btn-gerar-titulo" class="btn btn-secondary btn-icon" title="Gerar título com IA" aria-label="Gerar título com IA">
-                <svg width="20" height="20"><use href="#icon-sparkle"/></svg>
-              </button>
-              <button id="btn-refazer-titulo" class="btn btn-secondary btn-icon" title="Refazer título" aria-label="Refazer título">
-                <svg width="20" height="20"><use href="#icon-refresh"/></svg>
-              </button>
+              <button id="btn-gerar-titulo" class="btn btn-secundario btn-sm" title="Gerar título com IA">✨</button>
+              <button id="btn-refazer-titulo" class="btn btn-secundario btn-sm" title="Refazer título">🔄</button>
             </div>
-            <div class="field-meta">
-              <span class="badge-pill" id="badge-arquetipo">—</span>
+            <div class="titulo-status">
+              <span class="badge-status" id="badge-arquetipo">—</span>
               <span id="video-counter">Vídeo #0</span>
             </div>
           </div>
 
           <!-- Duração -->
-          <div class="card">
-            <label for="input-minutos">Duração (min)</label>
+          <div class="cartao">
+            <label for="input-minutos">⏱️ Duração (min)</label>
             <input type="number" id="input-minutos" min="1" step="0.5" value="10" />
           </div>
         </div>
 
-        <div class="field-grid">
+        <div class="grid-2">
           <!-- PPM -->
-          <div class="card">
-            <label for="input-ppm">Palavras/min (TTS)</label>
+          <div class="cartao">
+            <label for="input-ppm">🔊 Palavras/min (TTS)</label>
             <input type="number" id="input-ppm" min="50" step="5" value="150" />
           </div>
           <!-- Espaço informativo -->
-          <div class="card card--note">
-            <p>Ajuste conforme a velocidade do seu TTS.</p>
+          <div class="cartao" style="display: flex; flex-direction: column; justify-content: flex-end;">
+            <p style="color: var(--texto-fraco); font-size: 0.85rem; margin: 0;">
+              💡 Ajuste conforme a velocidade do seu TTS.
+            </p>
           </div>
         </div>
 
-        <button id="btn-gerar" class="btn btn-primary btn-lg btn-block">
-          Gerar Prompt
-        </button>
+        <button id="btn-gerar" class="btn btn-primary btn-lg">🚀 Gerar Prompt</button>
         <p class="status" id="status-gerar"></p>
 
         <!-- Resultado: Prompt -->
-        <div class="card card--result oculto" id="cartao-resultado">
-          <div class="card__header">
-            <h2>Prompt pronto</h2>
-            <button id="btn-copiar" class="btn btn-quiet btn-sm">
-              <svg width="18" height="18"><use href="#icon-copy"/></svg> Copiar
-            </button>
+        <div class="cartao oculto" id="cartao-resultado" style="flex: 1; min-height: 200px;">
+          <div class="cartao-header">
+            <h2>📋 Prompt pronto</h2>
+            <button id="btn-copiar" class="btn btn-ghost btn-sm">📄 Copiar</button>
           </div>
-          <textarea id="resultado-prompt" readonly spellcheck="false"></textarea>
+          <textarea id="resultado-prompt" readonly spellcheck="false" style="flex: 1; min-height: 180px;"></textarea>
           <details>
-            <summary>Parâmetros sorteados</summary>
+            <summary>📊 Parâmetros sorteados</summary>
             <pre id="parametros-detalhe"></pre>
           </details>
         </div>
 
         <!-- Resultado: Revisão -->
-        <div class="card oculto" id="cartao-revisao">
-          <div class="card__header">
-            <h2>Mensagem de revisão</h2>
-            <button id="btn-copiar-revisao" class="btn btn-quiet btn-sm">
-              <svg width="18" height="18"><use href="#icon-copy"/></svg> Copiar
-            </button>
+        <div class="cartao oculto" id="cartao-revisao">
+          <div class="cartao-header">
+            <h2>🔁 Mensagem de revisão</h2>
+            <button id="btn-copiar-revisao" class="btn btn-ghost btn-sm">📄 Copiar</button>
           </div>
           <textarea id="resultado-revisao" readonly spellcheck="false"></textarea>
         </div>
@@ -250,40 +160,14 @@
       <!-- ============================================================ -->
       <!-- ABA INTERNA: HISTÓRICO -->
       <!-- ============================================================ -->
-      <div class="tab-panel painel-interno" data-painel="historico">
-        <div class="card card--fill">
-          <div class="card__header">
-            <h2>Histórico do canal</h2>
-            <button id="btn-recarregar-historico" class="btn btn-quiet btn-sm">
-              <svg width="18" height="18"><use href="#icon-refresh"/></svg> Recarregar
-            </button>
+      <div class="painel-interno" data-painel="historico">
+        <div class="cartao" style="flex: 1;">
+          <div class="cartao-header">
+            <h2>📜 Histórico do canal</h2>
+            <button id="btn-recarregar-historico" class="btn btn-ghost btn-sm">↻ Recarregar</button>
           </div>
-          <div id="lista-historico" class="history-list"></div>
-          <button id="btn-mais-historico" class="btn btn-secondary btn-sm oculto">Carregar mais</button>
-        </div>
-      </div>
-
-      <!-- ============================================================ -->
-      <!-- ABA INTERNA: FORMATAR -->
-      <!-- ============================================================ -->
-      <div class="tab-panel painel-interno" data-painel="formatar">
-        <div class="card">
-          <label for="entrada-formatar">Cole o roteiro para dividir parágrafos longos</label>
-          <textarea id="entrada-formatar" placeholder="Cole aqui o roteiro gerado pela IA..." rows="8"></textarea>
-          <button id="btn-formatar" class="btn btn-primary">
-            Formatar parágrafos
-          </button>
-          <p class="status" id="status-formatar"></p>
-        </div>
-
-        <div class="card oculto" id="cartao-formatado">
-          <div class="card__header">
-            <h2>Roteiro formatado</h2>
-            <button id="btn-copiar-formatado" class="btn btn-quiet btn-sm">
-              <svg width="18" height="18"><use href="#icon-copy"/></svg> Copiar
-            </button>
-          </div>
-          <textarea id="resultado-formatado" readonly spellcheck="false"></textarea>
+          <div id="lista-historico" class="lista-historico" style="max-height: 400px;"></div>
+          <button id="btn-mais-historico" class="btn btn-secundario btn-sm oculto">Carregar mais</button>
         </div>
       </div>
 
@@ -293,19 +177,17 @@
     <!-- MODAL: CRIAR CANAL -->
     <!-- ============================================================ -->
     <div id="modal-canal" class="modal oculto">
-      <div class="modal__panel">
-        <div class="modal__header">
-          <h2><svg width="20" height="20"><use href="#icon-plus"/></svg> Novo canal</h2>
-          <button id="btn-fechar-modal" class="btn btn-quiet btn-icon" aria-label="Fechar">
-            <svg width="20" height="20"><use href="#icon-close"/></svg>
-          </button>
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>➕ Novo canal</h2>
+          <button id="btn-fechar-modal" class="btn btn-ghost btn-sm">✕</button>
         </div>
-        <div class="modal__body">
+        <div class="modal-body">
           <label for="input-nome-canal">Nome do canal</label>
           <input type="text" id="input-nome-canal" placeholder="Ex.: Paz na Madrugada" />
-
-          <div class="field-grid field-grid--modal">
-            <div class="field">
+          
+          <div class="grid-2" style="margin-top: 12px;">
+            <div class="campo">
               <label for="select-momento-canal">Momento</label>
               <select id="select-momento-canal">
                 <option value="manha_disposicao">🌅 Manhã</option>
@@ -313,7 +195,7 @@
                 <option value="noite_sono">🌙 Noite</option>
               </select>
             </div>
-            <div class="field">
+            <div class="campo">
               <label for="select-idioma-canal">Idioma</label>
               <select id="select-idioma-canal">
                 <option value="pt-BR">🇧🇷 Português</option>
@@ -324,7 +206,7 @@
               </select>
             </div>
           </div>
-          <button id="btn-criar-canal" class="btn btn-primary btn-block">Criar canal</button>
+          <button id="btn-criar-canal" class="btn btn-primary" style="width: 100%; margin-top: 16px;">Criar canal</button>
           <p class="status" id="status-canal"></p>
         </div>
       </div>
@@ -333,21 +215,6 @@
   </section>
 </div>
 
-<script>
-  // Toggle de tema — isolado, não interfere no app.js (Firebase).
-  (function () {
-    function aplicar(tema) {
-      document.documentElement.setAttribute("data-theme", tema);
-      localStorage.setItem("fpe-theme", tema);
-    }
-    function alternar() {
-      var atual = document.documentElement.getAttribute("data-theme");
-      aplicar(atual === "dark" ? "light" : "dark");
-    }
-    document.getElementById("btn-theme-toggle-login")?.addEventListener("click", alternar);
-    document.getElementById("btn-theme-toggle-app")?.addEventListener("click", alternar);
-  })();
-</script>
 <script type="module" src="app.js"></script>
 </body>
 </html>
