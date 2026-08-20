@@ -26,6 +26,7 @@ import {
   collection,
   addDoc,
   query,
+  where,
   orderBy,
   limit,
   startAfter,
@@ -33,6 +34,7 @@ import {
   serverTimestamp,
   Timestamp,
   writeBatch,
+  deleteDoc,
 } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
 import {
   getStorage,
@@ -73,6 +75,8 @@ let systemPrompts = null;
 let validatedRules = null;
 let rawTitles = null;
 let biblia = null;
+let canais = [];
+let canalSelecionadoId = null;
 let ultimoDocHistorico = null;
 const PAGINA_HISTORICO = 10;
 
@@ -113,7 +117,8 @@ onAuthStateChanged(auth, async (user) => {
     telaLogin.classList.add("oculto");
     telaApp.classList.remove("oculto");
     await carregarDados(user);
-    carregarHistorico(true);
+    await carregarCanais();
+    carregarHistorico(null, true);
   } else if (user) {
     loginErro.textContent = `O e-mail ${user.email} não tem acesso a este app.`;
     await signOut(auth);
@@ -140,7 +145,6 @@ async function carregarDados(user) {
     rawTitles = titles;
     console.log("✅ Dados carregados do GitHub");
 
-    // Aguardar o token do usuário antes de carregar a Bíblia
     if (user) {
       try {
         const token = await user.getIdToken();
@@ -148,7 +152,6 @@ async function carregarDados(user) {
         await carregarBibliaDoStorage("pt-BR");
       } catch (tokenErr) {
         console.warn("⚠️ Não foi possível obter token:", tokenErr);
-        // Tenta carregar mesmo assim (pode funcionar com regras públicas)
         await carregarBibliaDoStorage("pt-BR");
       }
     } else {
@@ -182,9 +185,159 @@ async function carregarBibliaDoStorage(idioma) {
   }
 }
 
-function getBibleFileName(idioma) {
-  return BIBLE_MAP[idioma] || "nvi.json";
+// ============================================================
+// GERENCIAMENTO DE CANAIS
+// ============================================================
+async function carregarCanais() {
+  try {
+    const q = query(collection(db, "canais"), orderBy("nome", "asc"));
+    const snap = await getDocs(q);
+    canais = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    console.log("✅ Canais carregados:", canais.length);
+    atualizarDropdownCanais();
+    renderizarListaCanais();
+  } catch (err) {
+    console.error("❌ Erro ao carregar canais:", err);
+  }
 }
+
+function atualizarDropdownCanais() {
+  const select = document.getElementById("select-canal");
+  select.innerHTML = "";
+  
+  if (canais.length === 0) {
+    select.innerHTML = '<option value="">Nenhum canal cadastrado</option>';
+    return;
+  }
+
+  for (const canal of canais) {
+    const option = document.createElement("option");
+    option.value = canal.id;
+    const momentoLabel = {
+      "manha_disposicao": "🌅 Manhã",
+      "madrugada_ansiedade": "🌙 Madrugada",
+      "noite_sono": "🌙 Noite"
+    }[canal.momento] || canal.momento;
+    const idiomaLabel = {
+      "pt-BR": "🇧🇷 PT",
+      "en-US": "🇺🇸 EN",
+      "es-LA": "🇪🇸 ES",
+      "fr": "🇫🇷 FR",
+      "ko": "🇰🇷 KO"
+    }[canal.idioma] || canal.idioma;
+    option.textContent = `${canal.nome} (${momentoLabel} · ${idiomaLabel})`;
+    select.appendChild(option);
+  }
+}
+
+function renderizarListaCanais() {
+  const container = document.getElementById("lista-canais");
+  container.innerHTML = "";
+  
+  if (canais.length === 0) {
+    container.innerHTML = '<p style="color: var(--texto-fraco);">Nenhum canal cadastrado ainda.</p>';
+    return;
+  }
+
+  for (const canal of canais) {
+    const item = document.createElement("div");
+    item.className = "item-historico";
+    const momentoLabel = {
+      "manha_disposicao": "🌅 Manhã",
+      "madrugada_ansiedade": "🌙 Madrugada",
+      "noite_sono": "🌙 Noite"
+    }[canal.momento] || canal.momento;
+    const idiomaLabel = {
+      "pt-BR": "🇧🇷 Português",
+      "en-US": "🇺🇸 Inglês",
+      "es-LA": "🇪🇸 Espanhol",
+      "fr": "🇫🇷 Francês",
+      "ko": "🇰🇷 Coreano"
+    }[canal.idioma] || canal.idioma;
+    
+    item.innerHTML = `
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <div>
+          <div class="item-titulo">${canal.nome}</div>
+          <div class="item-meta">${momentoLabel} · ${idiomaLabel}</div>
+        </div>
+        <button class="btn btn-ghost" style="font-size: 0.8rem; padding: 4px 10px;" data-id="${canal.id}">🗑️</button>
+      </div>
+    `;
+    
+    const btnDelete = item.querySelector("button");
+    btnDelete.addEventListener("click", async () => {
+      if (confirm(`Tem certeza que deseja excluir o canal "${canal.nome}" e todo o seu histórico?`)) {
+        await excluirCanal(canal.id);
+      }
+    });
+    
+    container.appendChild(item);
+  }
+}
+
+async function excluirCanal(canalId) {
+  try {
+    // Excluir todos os roteiros do histórico do canal
+    const q = query(collection(db, "historico"), where("canalId", "==", canalId));
+    const snap = await getDocs(q);
+    const batch = writeBatch(db);
+    snap.docs.forEach(doc => batch.delete(doc.ref));
+    await batch.commit();
+    
+    // Excluir o canal
+    await deleteDoc(doc(db, "canais", canalId));
+    
+    console.log("✅ Canal e histórico excluídos");
+    await carregarCanais();
+    await carregarHistorico(null, true);
+    
+    const status = document.getElementById("status-canal");
+    status.textContent = "Canal excluído com sucesso!";
+    status.className = "status sucesso";
+  } catch (err) {
+    console.error("❌ Erro ao excluir canal:", err);
+    const status = document.getElementById("status-canal");
+    status.textContent = "Erro ao excluir canal.";
+    status.className = "status erro";
+  }
+}
+
+document.getElementById("btn-criar-canal").addEventListener("click", async () => {
+  const nome = document.getElementById("input-nome-canal").value.trim();
+  const momento = document.getElementById("select-momento-canal").value;
+  const idioma = document.getElementById("select-idioma-canal").value;
+  const status = document.getElementById("status-canal");
+  
+  if (!nome) {
+    status.textContent = "Digite um nome para o canal.";
+    status.className = "status erro";
+    return;
+  }
+  
+  try {
+    await addDoc(collection(db, "canais"), {
+      nome: nome,
+      momento: momento,
+      idioma: idioma,
+      criadoEm: serverTimestamp(),
+      ativo: true
+    });
+    
+    status.textContent = "✅ Canal criado com sucesso!";
+    status.className = "status sucesso";
+    document.getElementById("input-nome-canal").value = "";
+    await carregarCanais();
+  } catch (err) {
+    console.error(err);
+    status.textContent = "Erro ao criar canal.";
+    status.className = "status erro";
+  }
+});
+
+document.getElementById("btn-recarregar-canais").addEventListener("click", async () => {
+  await carregarCanais();
+});
 
 // ============================================================
 // NAVEGAÇÃO POR ABAS
@@ -380,11 +533,82 @@ Se o total geral passar de ${params.palavrasMax} palavras, corte o excesso sem p
 }
 
 // ============================================================
+// CARREGAR HISTÓRICO POR CANAL
+// ============================================================
+async function carregarHistorico(canalId = null, reiniciar = false) {
+  const lista = document.getElementById("lista-historico");
+  const btnMais = document.getElementById("btn-mais-historico");
+  
+  if (reiniciar) {
+    lista.innerHTML = "";
+    ultimoDocHistorico = null;
+  }
+  
+  // Se não tiver canalId, tenta pegar do dropdown
+  if (!canalId) {
+    const select = document.getElementById("select-canal");
+    canalId = select.value;
+  }
+  
+  if (!canalId || canalId === "") {
+    lista.innerHTML = '<p style="color: var(--texto-fraco);">Selecione um canal para ver o histórico.</p>';
+    btnMais.classList.add("oculto");
+    return;
+  }
+  
+  try {
+    let q;
+    if (ultimoDocHistorico) {
+      q = query(
+        collection(db, "historico"),
+        where("canalId", "==", canalId),
+        orderBy("criadoEm", "desc"),
+        startAfter(ultimoDocHistorico),
+        limit(PAGINA_HISTORICO)
+      );
+    } else {
+      q = query(
+        collection(db, "historico"),
+        where("canalId", "==", canalId),
+        orderBy("criadoEm", "desc"),
+        limit(PAGINA_HISTORICO)
+      );
+    }
+    
+    const snap = await getDocs(q);
+    if (reiniciar && snap.empty) {
+      lista.innerHTML = '<p style="color: var(--texto-fraco);">Nenhum roteiro gerado para este canal ainda.</p>';
+    }
+    
+    snap.docs.forEach((docSnap) => {
+      const r = docSnap.data();
+      const item = document.createElement("div");
+      item.className = "item-historico";
+      const dataFormatada = r.criadoEm?.toDate?.()?.toLocaleString?.("pt-BR") || "—";
+      const momentoLabel = r.momento || "—";
+      const idiomaLabel = r.idioma || "—";
+      const duracaoTexto = r.minutos ? `${r.minutos} min (${r.palavras_alvo || "?"} palavras) · ` : "";
+      item.innerHTML = `
+        <div class="item-titulo">${escaparHtml(r.titulo || "(sem título)")}</div>
+        <div class="item-meta">${dataFormatada} · ${duracaoTexto}${momentoLabel} · ${idiomaLabel} · anáfora ${r.limite_anafora ?? "—"} · arquétipos: ${escaparHtml((r.arquetipos_usados || []).join(", "))}</div>
+      `;
+      lista.appendChild(item);
+    });
+    
+    if (snap.docs.length > 0) {
+      ultimoDocHistorico = snap.docs[snap.docs.length - 1];
+    }
+    btnMais.classList.toggle("oculto", snap.docs.length < PAGINA_HISTORICO);
+  } catch (err) {
+    console.error("Erro ao carregar histórico:", err);
+  }
+}
+
+// ============================================================
 // ABA: GERAR PROMPT
 // ============================================================
 const inputTitulo = document.getElementById("input-titulo");
-const selectMomento = document.getElementById("select-momento");
-const selectIdioma = document.getElementById("select-idioma");
+const selectCanal = document.getElementById("select-canal");
 const btnGerar = document.getElementById("btn-gerar");
 const statusGerar = document.getElementById("status-gerar");
 const cartaoResultado = document.getElementById("cartao-resultado");
@@ -395,15 +619,24 @@ const cartaoRevisao = document.getElementById("cartao-revisao");
 const resultadoRevisao = document.getElementById("resultado-revisao");
 const btnCopiarRevisao = document.getElementById("btn-copiar-revisao");
 
+// Quando o canal mudar, recarregar o histórico
+selectCanal.addEventListener("change", () => {
+  carregarHistorico(selectCanal.value, true);
+});
+
 btnGerar.addEventListener("click", async () => {
   const titulo = inputTitulo.value.trim();
-  const momento = selectMomento.value;
-  const idioma = selectIdioma.value;
+  const canalId = selectCanal.value;
   const minutos = parseFloat(document.getElementById("input-minutos").value);
   const ppm = parseFloat(document.getElementById("input-ppm").value) || PPM_PADRAO;
 
   if (!titulo) {
     statusGerar.textContent = "Digite o título do vídeo.";
+    statusGerar.className = "status erro";
+    return;
+  }
+  if (!canalId || canalId === "") {
+    statusGerar.textContent = "Selecione um canal.";
     statusGerar.className = "status erro";
     return;
   }
@@ -423,21 +656,33 @@ btnGerar.addEventListener("click", async () => {
   statusGerar.className = "status";
 
   try {
-    // Carregar a Bíblia no idioma selecionado (se ainda não estiver carregada)
+    // Buscar dados do canal
+    const canalDoc = await getDoc(doc(db, "canais", canalId));
+    if (!canalDoc.exists()) {
+      throw new Error("Canal não encontrado.");
+    }
+    const canalData = canalDoc.data();
+    const momento = canalData.momento;
+    const idioma = canalData.idioma;
+
+    // Carregar a Bíblia no idioma do canal
     const currentUser = auth.currentUser;
     if (currentUser) {
       await carregarBibliaDoStorage(idioma);
-    } else {
-      console.warn("⚠️ Usuário não autenticado. Usando Bíblia padrão se disponível.");
     }
 
     const langData = traducoes.languages?.[idioma] || {};
     const momentTemplates = traducoes.moment_templates || {};
     const templateBlocos = momentTemplates[momento]?.[idioma] || momentTemplates[momento]?.["pt-BR"] || "";
 
-    const histSnap = await getDocs(
-      query(collection(db, "historico"), orderBy("criadoEm", "desc"), limit(JANELA_REPETICAO))
+    // Carregar histórico APENAS deste canal
+    const q = query(
+      collection(db, "historico"),
+      where("canalId", "==", canalId),
+      orderBy("criadoEm", "desc"),
+      limit(JANELA_REPETICAO)
     );
+    const histSnap = await getDocs(q);
     const historicoRecente = histSnap.docs.map((d) => d.data());
 
     const arquetiposUsadosRecentes = itensUsadosRecentemente(historicoRecente, "arquetipos_usados");
@@ -485,6 +730,9 @@ btnGerar.addEventListener("click", async () => {
     resultadoPrompt.value = promptFinal;
     parametrosDetalhe.textContent = JSON.stringify(
       {
+        canal: canalData.nome,
+        momento,
+        idioma,
         minutos: params.minutos,
         ppm: params.ppm,
         palavras_alvo: params.palavrasAlvo,
@@ -494,8 +742,6 @@ btnGerar.addEventListener("click", async () => {
         humor_min: params.humorMin,
         limite_anafora: params.limite_anafora,
         distribuicao_blocos: params.distribuicao,
-        momento,
-        idioma,
         arquetipos_evitar: params.arquetipos_evitar,
         casos_evitar: params.casos_evitar,
       },
@@ -508,7 +754,9 @@ btnGerar.addEventListener("click", async () => {
     resultadoRevisao.value = revisao;
     cartaoRevisao.classList.remove("oculto");
 
+    // Salvar no histórico com canalId
     await addDoc(collection(db, "historico"), {
+      canalId: canalId,
       titulo,
       criadoEm: serverTimestamp(),
       minutos: params.minutos,
@@ -523,7 +771,9 @@ btnGerar.addEventListener("click", async () => {
 
     statusGerar.textContent = "Prompt gerado e histórico atualizado.";
     statusGerar.className = "status sucesso";
-    carregarHistorico(true);
+    
+    // Recarregar histórico do canal
+    carregarHistorico(canalId, true);
   } catch (err) {
     console.error(err);
     statusGerar.textContent = "Erro ao gerar: " + err.message;
@@ -562,7 +812,7 @@ btnCopiarRevisao.addEventListener("click", async () => {
 });
 
 // ============================================================
-// ABA: HISTÓRICO
+// ABA: HISTÓRICO (já integrado com o dropdown de canais)
 // ============================================================
 function escaparHtml(texto) {
   const div = document.createElement("div");
@@ -570,47 +820,15 @@ function escaparHtml(texto) {
   return div.innerHTML;
 }
 
-async function carregarHistorico(reiniciar = false) {
-  const lista = document.getElementById("lista-historico");
-  const btnMais = document.getElementById("btn-mais-historico");
-  if (reiniciar) {
-    lista.innerHTML = "";
-    ultimoDocHistorico = null;
-  }
-  let q;
-  if (ultimoDocHistorico) {
-    q = query(
-      collection(db, "historico"),
-      orderBy("criadoEm", "desc"),
-      startAfter(ultimoDocHistorico),
-      limit(PAGINA_HISTORICO)
-    );
-  } else {
-    q = query(collection(db, "historico"), orderBy("criadoEm", "desc"), limit(PAGINA_HISTORICO));
-  }
-  const snap = await getDocs(q);
-  snap.docs.forEach((docSnap) => {
-    const r = docSnap.data();
-    const item = document.createElement("div");
-    item.className = "item-historico";
-    const dataFormatada = r.criadoEm?.toDate?.()?.toLocaleString?.("pt-BR") || "—";
-    const momentoLabel = r.momento || "—";
-    const idiomaLabel = r.idioma || "—";
-    const duracaoTexto = r.minutos ? `${r.minutos} min (${r.palavras_alvo || "?"} palavras) · ` : "";
-    item.innerHTML = `
-      <div class="item-titulo">${escaparHtml(r.titulo || "(sem título)")}</div>
-      <div class="item-meta">${dataFormatada} · ${duracaoTexto}${momentoLabel} · ${idiomaLabel} · anáfora ${r.limite_anafora ?? "—"} · arquétipos: ${escaparHtml((r.arquetipos_usados || []).join(", "))}</div>
-    `;
-    lista.appendChild(item);
-  });
-  if (snap.docs.length > 0) {
-    ultimoDocHistorico = snap.docs[snap.docs.length - 1];
-  }
-  btnMais.classList.toggle("oculto", snap.docs.length < PAGINA_HISTORICO);
-}
+document.getElementById("btn-recarregar-historico").addEventListener("click", () => {
+  const canalId = document.getElementById("select-canal").value;
+  carregarHistorico(canalId, true);
+});
 
-document.getElementById("btn-recarregar-historico").addEventListener("click", () => carregarHistorico(true));
-document.getElementById("btn-mais-historico").addEventListener("click", () => carregarHistorico(false));
+document.getElementById("btn-mais-historico").addEventListener("click", () => {
+  const canalId = document.getElementById("select-canal").value;
+  carregarHistorico(canalId, false);
+});
 
 // ============================================================
 // ABA: FORMATAR PARÁGRAFOS
