@@ -34,10 +34,16 @@ import {
   Timestamp,
   writeBatch,
 } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
+import {
+  getStorage,
+  ref,
+  getDownloadURL,
+} from "https://www.gstatic.com/firebasejs/12.15.0/firebase-storage.js";
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
+const storage = getStorage(app);
 
 // ---------- constantes do motor ----------
 const JANELA_REPETICAO = 6;
@@ -52,11 +58,21 @@ const URL_SYSTEM_PROMPTS = GITHUB_BASE + "system_prompts.json";
 const URL_VALIDATED_RULES = GITHUB_BASE + "validated_rules.json";
 const URL_RAW_TITLES = GITHUB_BASE + "raw_titles.json";
 
+// ---------- Mapeamento de Bíblias por idioma ----------
+const BIBLE_MAP = {
+  "pt-BR": "nvi.json",
+  "en-US": "niv.json",
+  "es-LA": "nvi_es.json",
+  "fr": "lsg.json",
+  "ko": "krv.json"
+};
+
 // ---------- estado global ----------
 let traducoes = null;
 let systemPrompts = null;
 let validatedRules = null;
 let rawTitles = null;
+let biblia = null;
 let ultimoDocHistorico = null;
 const PAGINA_HISTORICO = 10;
 
@@ -108,7 +124,7 @@ onAuthStateChanged(auth, async (user) => {
 });
 
 // ============================================================
-// CARREGAR DADOS DO GITHUB
+// CARREGAR DADOS DO GITHUB E STORAGE
 // ============================================================
 async function carregarDados() {
   try {
@@ -123,11 +139,37 @@ async function carregarDados() {
     validatedRules = rules;
     rawTitles = titles;
     console.log("✅ Dados carregados do GitHub");
+    
+    // Carregar a Bíblia padrão (português)
+    await carregarBibliaDoStorage("pt-BR");
   } catch (err) {
     console.error("❌ Erro ao carregar dados:", err);
-    document.getElementById("status-gerar").textContent = "Erro ao carregar dados. Recarregue a página.";
-    document.getElementById("status-gerar").className = "status erro";
+    const status = document.getElementById("status-gerar");
+    if (status) {
+      status.textContent = "Erro ao carregar dados. Recarregue a página.";
+      status.className = "status erro";
+    }
   }
+}
+
+async function carregarBibliaDoStorage(idioma) {
+  try {
+    const fileName = BIBLE_MAP[idioma] || "nvi.json";
+    const bibleRef = ref(storage, `bible_data/${fileName}`);
+    const url = await getDownloadURL(bibleRef);
+    const response = await fetch(url);
+    biblia = await response.json();
+    console.log(`✅ Bíblia carregada do Storage (${fileName})`);
+    return true;
+  } catch (err) {
+    console.error("❌ Erro ao carregar a Bíblia:", err);
+    biblia = null;
+    return false;
+  }
+}
+
+function getBibleFileName(idioma) {
+  return BIBLE_MAP[idioma] || "nvi.json";
 }
 
 // ============================================================
@@ -212,6 +254,29 @@ function calcularPalavrasPorBloco(distribuicaoPct, palavrasAlvo) {
     resultado[bloco] = Math.round((palavrasAlvo * distribuicaoPct[bloco]) / 100);
   }
   return resultado;
+}
+
+function buscarVersiculo(referencia, biblia) {
+  if (!biblia) return null;
+  const padrao = /^([a-zA-ZÀ-ú]+)\s+(\d+):(\d+)(?:-(\d+))?$/;
+  const match = padrao.exec(referencia.trim());
+  if (!match) return null;
+  
+  const [_, livroNome, capituloStr, versiculoStr, versiculoFimStr] = match;
+  const capitulo = parseInt(capituloStr);
+  const versiculo = parseInt(versiculoStr);
+  
+  const livro = biblia.find(l => l.name.toLowerCase() === livroNome.toLowerCase());
+  if (!livro) return null;
+  if (capitulo > livro.chapters.length) return null;
+  
+  if (versiculoFimStr) {
+    const versiculoFim = parseInt(versiculoFimStr);
+    const versos = livro.chapters[capitulo - 1].slice(versiculo - 1, versiculoFim);
+    return versos.join(" ");
+  } else {
+    return livro.chapters[capitulo - 1][versiculo - 1] || null;
+  }
 }
 
 function montarMensagemRevisao(params, langData) {
@@ -344,6 +409,9 @@ btnGerar.addEventListener("click", async () => {
   statusGerar.className = "status";
 
   try {
+    // Carregar a Bíblia no idioma selecionado
+    await carregarBibliaDoStorage(idioma);
+
     const langData = traducoes.languages?.[idioma] || {};
     const momentTemplates = traducoes.moment_templates || {};
     const templateBlocos = momentTemplates[momento]?.[idioma] || momentTemplates[momento]?.["pt-BR"] || "";
