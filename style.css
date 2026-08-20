@@ -113,7 +113,7 @@ button, input, select, textarea {
 }
 
 /* ============================================================ */
-/* LAYOUT GERAL */
+/* LAYOUT GERAL — TELA CHEIA */
 /* ============================================================ */
 .app-wrapper {
   min-height: 100vh;
@@ -123,8 +123,21 @@ button, input, select, textarea {
   padding: 20px;
 }
 
+.tela-app {
+  width: 100%;
+  max-width: 1400px; /* Aumentado de 1100px para 1400px */
+  min-height: 90vh;
+  background: var(--bg-painel);
+  border: 1px solid var(--borda);
+  border-radius: var(--raio);
+  padding: 32px 40px 48px;
+  box-shadow: var(--sombra);
+  display: flex;
+  flex-direction: column;
+}
+
 /* ============================================================ */
-/* LOGIN */
+/* LOGIN (mantido) */
 /* ============================================================ */
 .tela-login {
   width: 100%;
@@ -158,19 +171,8 @@ button, input, select, textarea {
 }
 
 /* ============================================================ */
-/* APP PRINCIPAL */
+/* APP PRINCIPAL — TELA CHEIA */
 /* ============================================================ */
-.tela-app {
-  width: 100%;
-  max-width: 1100px;
-  background: var(--bg-painel);
-  border: 1px solid var(--borda);
-  border-radius: var(--raio);
-  padding: 28px 32px 40px;
-  box-shadow: var(--sombra);
-}
-
-/* TOPO */
 .topo {
   display: flex;
   align-items: center;
@@ -181,13 +183,13 @@ button, input, select, textarea {
 }
 
 .topo-info .badge { display: block; margin-bottom: 2px; }
-.topo-info h1 { font-size: 1.4rem; font-weight: 600; letter-spacing: -0.02em; }
+.topo-info h1 { font-size: 1.6rem; font-weight: 600; letter-spacing: -0.02em; }
 
 /* ABAS */
 .nav-aba {
   display: flex;
-  gap: 2px;
-  margin-bottom: 24px;
+  gap: 4px;
+  margin-bottom: 28px;
   border-bottom: 1px solid var(--borda-fraca);
 }
 
@@ -195,9 +197,9 @@ button, input, select, textarea {
   background: transparent;
   border: none;
   color: var(--texto-fraco);
-  padding: 10px 18px;
+  padding: 12px 24px;
   font-weight: 500;
-  font-size: 0.9rem;
+  font-size: 0.95rem;
   cursor: pointer;
   border-bottom: 2px solid transparent;
   transition: color var(--transicao), border-color var(--transicao);
@@ -212,7 +214,8 @@ button, input, select, textarea {
 .painel {
   display: none;
   flex-direction: column;
-  gap: 16px;
+  gap: 20px;
+  flex: 1;
   animation: fadeIn 0.2s ease;
 }
 .painel.ativo { display: flex; }
@@ -223,16 +226,16 @@ button, input, select, textarea {
 }
 
 /* ============================================================ */
-/* CARTÕES E FORMULÁRIOS */
+/* CARTÕES — MAIS ESPAÇOSOS */
 /* ============================================================ */
 .cartao {
   background: var(--bg-input);
   border: 1px solid var(--borda);
   border-radius: var(--raio);
-  padding: 20px 22px;
+  padding: 24px 28px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
 }
 
 .cartao-header {
@@ -240,10 +243,10 @@ button, input, select, textarea {
   align-items: center;
   justify-content: space-between;
 }
-.cartao-header h2 { font-size: 1.05rem; font-weight: 600; }
+.cartao-header h2 { font-size: 1.1rem; font-weight: 600; }
 
 label {
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   font-weight: 500;
   color: var(--texto-fraco);
   letter-spacing: 0.02em;
@@ -254,8 +257,9 @@ input, select, textarea {
   border: 1px solid var(--borda);
   border-radius: 8px;
   color: var(--texto);
-  padding: 10px 14px;
+  padding: 12px 16px;
   width: 100%;
+  font-size: 1rem;
   transition: border-color var(--transicao);
 }
 input:focus, select:focus, textarea:focus {
@@ -267,25 +271,25 @@ select {
   appearance: none;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23A89988' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
-  background-position: right 12px center;
-  padding-right: 36px;
+  background-position: right 14px center;
+  padding-right: 40px;
 }
 
 textarea {
   resize: vertical;
   font-family: var(--fonte-mono);
-  font-size: 0.82rem;
+  font-size: 0.85rem;
   line-height: 1.6;
   min-height: 120px;
 }
 
 textarea#resultado-prompt {
-  min-height: 320px;
+  min-height: 380px;
 }
 
 .input-group {
   display: flex;
-  gap: 6px;
+  gap: 8px;
 }
 .input-group input { flex: 1; }
 .input-group .btn { flex-shrink: 0; }
@@ -293,14 +297,14 @@ textarea#resultado-prompt {
 .titulo-status {
   display: flex;
   align-items: center;
-  gap: 12px;
-  font-size: 0.75rem;
+  gap: 16px;
+  font-size: 0.8rem;
   color: var(--texto-fraco);
 }
 
 .badge-status {
   background: var(--bg);
-  padding: 2px 10px;
+  padding: 4px 14px;
   border-radius: 20px;
   border: 1px solid var(--borda);
   font-size: 0.7rem;
@@ -308,18 +312,33 @@ textarea#resultado-prompt {
   color: var(--destaque-forte);
 }
 
-/* GRID */
+/* GRID — MAIS LARGA */
 .grid-2 {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 16px;
+  gap: 20px;
+}
+
+/* GRID PARA 3 COLUNAS (se necessário) */
+.grid-3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 20px;
+}
+
+/* BOTÃO GERAR — DESTAQUE */
+#btn-gerar {
+  width: 100%;
+  padding: 16px;
+  font-size: 1.1rem;
+  margin-top: 4px;
 }
 
 /* STATUS */
 .status {
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   color: var(--texto-fraco);
-  min-height: 1.6em;
+  min-height: 1.8em;
 }
 .status.sucesso { color: var(--sucesso); }
 .status.erro { color: var(--erro); }
@@ -329,7 +348,7 @@ textarea#resultado-prompt {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  max-height: 320px;
+  max-height: 360px;
   overflow-y: auto;
 }
 
@@ -337,29 +356,31 @@ textarea#resultado-prompt {
   background: var(--bg);
   border: 1px solid var(--borda-fraca);
   border-radius: 8px;
-  padding: 12px 16px;
+  padding: 14px 18px;
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
 .item-canal .item-titulo { font-weight: 600; }
-.item-canal .item-meta { font-size: 0.78rem; color: var(--texto-fraco); }
+.item-canal .item-meta { font-size: 0.8rem; color: var(--texto-fraco); }
 
 .item-historico .item-titulo { font-weight: 500; }
-.item-historico .item-meta { font-size: 0.78rem; color: var(--texto-fraco); }
+.item-historico .item-meta { font-size: 0.8rem; color: var(--texto-fraco); }
 
 /* ============================================================ */
-/* RESPONSIVO */
+/* RESPONSIVO — TELAS MENORES */
 /* ============================================================ */
-@media (max-width: 700px) {
-  .tela-app { padding: 16px; }
-  .grid-2 { grid-template-columns: 1fr; }
+@media (max-width: 900px) {
+  .tela-app { padding: 20px; }
+  .grid-2, .grid-3 { grid-template-columns: 1fr; }
   .topo { flex-direction: column; align-items: flex-start; gap: 8px; }
-  .aba { font-size: 0.8rem; padding: 8px 12px; }
+  .aba { font-size: 0.85rem; padding: 10px 16px; }
+  .cartao { padding: 18px; }
 }
 
 @media (max-width: 480px) {
   .login-card { padding: 24px 18px; }
   .cartao { padding: 14px; }
+  .tela-app { padding: 12px; }
 }
