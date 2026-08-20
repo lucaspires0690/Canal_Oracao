@@ -1,0 +1,77 @@
+{
+  "meta": {
+    "version": "1.0.0",
+    "generated_at": "2026-08-20T16:00:00Z",
+    "purpose": "Regras de validação para títulos e roteiros do sistema de oração"
+  },
+  "title_rules": {
+    "forbidden_words": [
+      "anticristo", "cern", "profecia", "fim dos tempos", "beast", "elite", "marca da besta",
+      "guerra", "israel", "eclipse", "apocalipse", "antichrist", "prophecy", "end times",
+      "revelation", "mark of the beast", "elite", "new world", "sistema da besta"
+    ],
+    "required_command_words": [
+      "ore", "diga", "ouça", "comece", "faça", "entregue", "confesse", "agradeça", "clame"
+    ],
+    "required_emotion_words": [
+      "coração", "ansiedade", "paz", "proteção", "medo", "acalento", "descanso", "força",
+      "esperança", "amor", "confiança", "fé", "alívio", "segurança", "tranquilidade"
+    ],
+    "required_moment_words": [
+      "manhã", "noite", "madrugada", "dia", "dormir", "despertar", "nascer", "pôr do sol",
+      "3h", "3 da manhã", "madrugada", "amanhecer", "anoitecer"
+    ],
+    "min_length": 40,
+    "max_length": 70,
+    "formula": "[COMANDO] + [CONTEXTO/DOR] + [PROMESSA]",
+    "validation_logic": {
+      "must_contain_at_least_one_command": true,
+      "must_contain_at_least_one_emotion": true,
+      "must_contain_moment_or_context": true,
+      "must_not_contain_forbidden_words": true,
+      "length_between_40_and_70": true
+    }
+  },
+  "script_rules": {
+    "duration": {
+      "default": "10-12 minutos",
+      "sleep": "3h+",
+      "morning": "15-20 minutos",
+      "night": "30-40 minutos"
+    },
+    "structure": {
+      "B1": {"name": "Gancho", "duration": "0:00-0:30", "type": "fisico_declaracao"},
+      "B2": {"name": "Acolhimento", "duration": "0:30-1:30", "type": "validacao_da_dor"},
+      "B3": {"name": "Oração Principal", "duration": "1:30-6:00", "type": "entrega_pedido"},
+      "B4": {"name": "Virada", "duration": "6:00-8:00", "type": "paradoxo_biblico"},
+      "B5": {"name": "Tensão Honesta", "duration": "8:00-10:00", "type": "realidade_luta"},
+      "B6": {"name": "Promessa", "duration": "10:00-12:00", "type": "revelacao_biblica"},
+      "B7": {"name": "Encerramento", "duration": "12:00-13:00", "type": "bencao_final"}
+    },
+    "mandatory_elements": [
+      "Pelo menos 1 instrução de respiração no Bloco 2",
+      "Pelo menos 2 versículos citados (via {{VERSICULO}})",
+      "Pelo menos 2 micro-histórias/testemunhos",
+      "Pelo menos 5 repetições suaves da palavra-chave central",
+      "Nenhum parágrafo com mais de 3 frases",
+      "Tom acolhedor e compassivo (nunca de acusação ou medo)"
+    ]
+  },
+  "channel_config": {
+    "moment_options": ["Madrugada", "Manhã", "Noite"],
+    "emotion_options": ["Medo/Proteção", "Ansiedade/Preocupação", "Solidão/Acolhimento", "Gratidão/Renovação"],
+    "tone_options": ["Calmo/Acolhedor", "Energético/Motivacional", "Poético/Reflexivo"]
+  },
+  "bible_validation": {
+    "source": "nvi.json",
+    "translation": "Nova Versão Internacional",
+    "validation_method": "Dupla validação (JSON local + API pública)",
+    "fallback_mechanism": "3 tentativas de referência (REF1, REF2, REF3)"
+  },
+  "success_patterns_from_data": {
+    "top_keywords_success": ["Begin", "Pray", "Protection", "Sleep", "Morning", "3am", "Everyday", "Breakthrough", "Blessings"],
+    "top_keywords_failure": ["Antichrist", "CERN", "Prophecy", "Beast", "System", "Eclipse", "Elite"],
+    "ctr_boosters": ["Comandos diretos", "Palavras de hábito", "Momento específico", "Promessa de transformação"],
+    "ctr_killers": ["Profecias", "Notícias", "Política", "Títulos genéricos"]
+  }
+}
