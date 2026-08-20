@@ -94,20 +94,65 @@ let validatedRules = null;
 let rawTitles = null;
 let biblia = null;
 let canais = [];
+let canalSelecionadoId = null;
 let ultimoDocHistorico = null;
 let ultimoTituloGerado = "";
 let ultimoArquetipo = "";
 
 // ============================================================
-// PERSISTÊNCIA LOCAL (PPM)
+// REFERÊNCIAS DOS ELEMENTOS (Nova estrutura)
 // ============================================================
 const inputPpm = document.getElementById("input-ppm");
+const inputTitulo = document.getElementById("input-titulo");
+const inputMinutos = document.getElementById("input-minutos");
+const btnGerar = document.getElementById("btn-gerar");
+const btnGerarTitulo = document.getElementById("btn-gerar-titulo");
+const btnRefazerTitulo = document.getElementById("btn-refazer-titulo");
+const btnCopiar = document.getElementById("btn-copiar");
+const btnCopiarRevisao = document.getElementById("btn-copiar-revisao");
+const btnFormatar = document.getElementById("btn-formatar");
+const btnCopiarFormatado = document.getElementById("btn-copiar-formatado");
+const statusGerar = document.getElementById("status-gerar");
+const statusCanal = document.getElementById("status-canal");
+const statusFormatar = document.getElementById("status-formatar");
+const resultadoPrompt = document.getElementById("resultado-prompt");
+const resultadoRevisao = document.getElementById("resultado-revisao");
+const resultadoFormatado = document.getElementById("resultado-formatado");
+const parametrosDetalhe = document.getElementById("parametros-detalhe");
+const cartaoResultado = document.getElementById("cartao-resultado");
+const cartaoRevisao = document.getElementById("cartao-revisao");
+const cartaoFormatado = document.getElementById("cartao-formatado");
+const entradaFormatar = document.getElementById("entrada-formatar");
+const listaHistorico = document.getElementById("lista-historico");
+const listaCanaisDash = document.getElementById("lista-canais-dash");
+const btnRecarregarHistorico = document.getElementById("btn-recarregar-historico");
+const btnMaisHistorico = document.getElementById("btn-mais-historico");
+const badgeArquetipo = document.getElementById("badge-arquetipo");
+const videoCounter = document.getElementById("video-counter");
+const detalheNome = document.getElementById("detalhe-nome");
+const detalheMeta = document.getElementById("detalhe-meta");
+const detalheBadge = document.getElementById("detalhe-badge");
+const detalheTotal = document.getElementById("detalhe-total");
+const btnVoltarDashboard = document.getElementById("btn-voltar-dashboard");
+const btnCriarCanalDash = document.getElementById("btn-criar-canal-dash");
+const modalCanal = document.getElementById("modal-canal");
+const btnFecharModal = document.getElementById("btn-fechar-modal");
+const btnCriarCanal = document.getElementById("btn-criar-canal");
+const inputNomeCanal = document.getElementById("input-nome-canal");
+const selectMomentoCanal = document.getElementById("select-momento-canal");
+const selectIdiomaCanal = document.getElementById("select-idioma-canal");
+
+// ============================================================
+// PERSISTÊNCIA LOCAL (PPM)
+// ============================================================
 const ppmSalvo = localStorage.getItem("storyengine_ppm");
-if (ppmSalvo) inputPpm.value = ppmSalvo;
-inputPpm.addEventListener("change", () => {
-  const valor = parseFloat(inputPpm.value);
-  if (valor > 0) localStorage.setItem("storyengine_ppm", String(valor));
-});
+if (ppmSalvo && inputPpm) inputPpm.value = ppmSalvo;
+if (inputPpm) {
+  inputPpm.addEventListener("change", () => {
+    const valor = parseFloat(inputPpm.value);
+    if (valor > 0) localStorage.setItem("storyengine_ppm", String(valor));
+  });
+}
 
 // ============================================================
 // AUTENTICAÇÃO
@@ -120,29 +165,71 @@ const btnGoogleLogin = document.getElementById("btn-google-login");
 const loginErro = document.getElementById("login-erro");
 const btnLogout = document.getElementById("btn-logout");
 
-btnGoogleLogin.addEventListener("click", async () => {
-  loginErro.textContent = "";
-  try { await signInWithPopup(auth, new GoogleAuthProvider()); }
-  catch (err) { loginErro.textContent = "Erro ao entrar. Tente novamente."; }
-});
+if (btnGoogleLogin) {
+  btnGoogleLogin.addEventListener("click", async () => {
+    loginErro.textContent = "";
+    try { await signInWithPopup(auth, new GoogleAuthProvider()); }
+    catch (err) { loginErro.textContent = "Erro ao entrar. Tente novamente."; }
+  });
+}
 
-btnLogout.addEventListener("click", () => signOut(auth));
+if (btnLogout) {
+  btnLogout.addEventListener("click", () => signOut(auth));
+}
 
 onAuthStateChanged(auth, async (user) => {
   if (user && user.email === EMAIL_PERMITIDO) {
-    telaLogin.classList.add("oculto");
-    telaApp.classList.remove("oculto");
+    if (telaLogin) telaLogin.classList.add("oculto");
+    if (telaApp) telaApp.classList.remove("oculto");
     await carregarDados(user);
     await carregarCanais();
-    carregarHistorico(null, true);
+    mostrarDashboard();
   } else if (user) {
-    loginErro.textContent = `E-mail ${user.email} não autorizado.`;
+    if (loginErro) loginErro.textContent = `E-mail ${user.email} não autorizado.`;
     await signOut(auth);
   } else {
-    telaApp.classList.add("oculto");
-    telaLogin.classList.remove("oculto");
+    if (telaApp) telaApp.classList.add("oculto");
+    if (telaLogin) telaLogin.classList.remove("oculto");
   }
 });
+
+// ============================================================
+// NAVEGAÇÃO ENTRE TELAS
+// ============================================================
+function mostrarDashboard() {
+  const dashboard = document.getElementById("tela-dashboard");
+  const detalhe = document.getElementById("tela-detalhe");
+  if (dashboard) dashboard.classList.remove("oculto");
+  if (detalhe) detalhe.classList.add("oculto");
+  if (btnVoltarDashboard) btnVoltarDashboard.classList.add("oculto");
+  renderizarCanaisDashboard();
+}
+
+function mostrarDetalhe(canalId) {
+  canalSelecionadoId = canalId;
+  const dashboard = document.getElementById("tela-dashboard");
+  const detalhe = document.getElementById("tela-detalhe");
+  if (dashboard) dashboard.classList.add("oculto");
+  if (detalhe) detalhe.classList.remove("oculto");
+  if (btnVoltarDashboard) btnVoltarDashboard.classList.remove("oculto");
+  
+  const canal = canais.find(c => c.id === canalId);
+  if (canal && detalheNome) {
+    detalheNome.textContent = canal.nome;
+    const momentoLabel = { manha_disposicao: "🌅 Manhã", madrugada_ansiedade: "🌙 Madrugada", noite_sono: "🌙 Noite" }[canal.momento] || canal.momento;
+    const idiomaLabel = { "pt-BR": "🇧🇷 Português", "en-US": "🇺🇸 Inglês", "es-LA": "🇪🇸 Espanhol", "fr": "🇫🇷 Francês", "ko": "🇰🇷 Coreano" }[canal.idioma] || canal.idioma;
+    if (detalheMeta) detalheMeta.textContent = `${momentoLabel} · ${idiomaLabel}`;
+    if (detalheBadge) detalheBadge.textContent = canal.momento.replace("_", " ").toUpperCase();
+    carregarHistorico(canalId, true);
+    atualizarContadorVideos(canalId);
+  }
+}
+
+if (btnVoltarDashboard) {
+  btnVoltarDashboard.addEventListener("click", () => {
+    mostrarDashboard();
+  });
+}
 
 // ============================================================
 // CARREGAR DADOS DO GITHUB E STORAGE
@@ -163,8 +250,7 @@ async function carregarDados(user) {
     if (user) await carregarBibliaDoStorage("pt-BR");
   } catch (err) {
     console.error("❌ Erro ao carregar dados:", err);
-    const status = document.getElementById("status-gerar");
-    if (status) { status.textContent = "Erro ao carregar dados. Recarregue."; status.className = "status erro"; }
+    if (statusGerar) { statusGerar.textContent = "Erro ao carregar dados. Recarregue."; statusGerar.className = "status erro"; }
   }
 }
 
@@ -186,102 +272,105 @@ async function carregarBibliaDoStorage(idioma) {
 }
 
 // ============================================================
-// CANAIS
+// CANAIS — DASHBOARD
 // ============================================================
 async function carregarCanais() {
   try {
     const q = query(collection(db, "canais"), orderBy("nome", "asc"));
     const snap = await getDocs(q);
     canais = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-    atualizarDropdown();
-    renderizarCanais();
+    renderizarCanaisDashboard();
   } catch (err) { console.error("Erro ao carregar canais:", err); }
 }
 
-function atualizarDropdown() {
-  const select = document.getElementById("select-canal");
-  select.innerHTML = "";
+async function renderizarCanaisDashboard() {
+  if (!listaCanaisDash) return;
+  listaCanaisDash.innerHTML = "";
+  
   if (!canais.length) {
-    select.innerHTML = '<option value="">Nenhum canal</option>';
+    listaCanaisDash.innerHTML = `<div class="empty-state">Nenhum canal criado ainda. Clique em "Criar canal" para começar.</div>`;
     return;
   }
-  for (const c of canais) {
-    const opt = document.createElement("option");
-    opt.value = c.id;
-    const m = { manha_disposicao: "🌅", madrugada_ansiedade: "🌙", noite_sono: "🌙" }[c.momento] || "";
-    const i = { "pt-BR": "🇧🇷", "en-US": "🇺🇸", "es-LA": "🇪🇸", "fr": "🇫🇷", "ko": "🇰🇷" }[c.idioma] || "";
-    opt.textContent = `${c.nome} ${m} ${i}`.trim();
-    select.appendChild(opt);
+  
+  for (const canal of canais) {
+    const card = document.createElement("div");
+    card.className = "card-canal";
+    const momentoIcon = { manha_disposicao: "🌅", madrugada_ansiedade: "🌙", noite_sono: "🌙" }[canal.momento] || "📌";
+    const momentoLabel = { manha_disposicao: "Manhã", madrugada_ansiedade: "Madrugada", noite_sono: "Noite" }[canal.momento] || canal.momento;
+    const idiomaLabel = { "pt-BR": "🇧🇷 PT", "en-US": "🇺🇸 EN", "es-LA": "🇪🇸 ES", "fr": "🇫🇷 FR", "ko": "🇰🇷 KO" }[canal.idioma] || canal.idioma;
+    
+    const q = query(collection(db, "historico"), where("canalId", "==", canal.id));
+    const snap = await getDocs(q);
+    const total = snap.size;
+    
+    card.innerHTML = `
+      <div class="nome">${momentoIcon} ${canal.nome}</div>
+      <div class="meta">${momentoLabel} · ${idiomaLabel}</div>
+      <div class="stats">${total} vídeo${total !== 1 ? 's' : ''}</div>
+      <button class="btn btn-primary btn-sm btn-entrar" data-id="${canal.id}">Entrar</button>
+    `;
+    listaCanaisDash.appendChild(card);
+    
+    card.querySelector(".btn-entrar").addEventListener("click", (e) => {
+      e.stopPropagation();
+      mostrarDetalhe(canal.id);
+    });
+    card.addEventListener("click", () => {
+      mostrarDetalhe(canal.id);
+    });
   }
 }
 
-function renderizarCanais() {
-  const container = document.getElementById("lista-canais");
-  container.innerHTML = "";
-  if (!canais.length) {
-    container.innerHTML = '<p style="color: var(--texto-fraco);">Nenhum canal ainda.</p>';
-    return;
-  }
-  for (const c of canais) {
-    const div = document.createElement("div");
-    div.className = "item-canal";
-    const m = { manha_disposicao: "Manhã", madrugada_ansiedade: "Madrugada", noite_sono: "Noite" }[c.momento] || "";
-    const i = { "pt-BR": "Português", "en-US": "Inglês", "es-LA": "Espanhol", "fr": "Francês", "ko": "Coreano" }[c.idioma] || "";
-    div.innerHTML = `
-      <div>
-        <div class="item-titulo">${c.nome}</div>
-        <div class="item-meta">${m} · ${i}</div>
-      </div>
-      <button class="btn btn-ghost btn-sm btn-excluir-canal" data-id="${c.id}">🗑️</button>
-    `;
-    container.appendChild(div);
-  }
-  document.querySelectorAll(".btn-excluir-canal").forEach(btn => {
-    btn.addEventListener("click", async () => {
-      const id = btn.dataset.id;
-      if (confirm("Excluir canal e todo o histórico?")) await excluirCanal(id);
-    });
+async function atualizarContadorVideos(canalId) {
+  if (!detalheTotal) return;
+  const q = query(collection(db, "historico"), where("canalId", "==", canalId));
+  const snap = await getDocs(q);
+  detalheTotal.textContent = `${snap.size} vídeo${snap.size !== 1 ? 's' : ''}`;
+}
+
+// ============================================================
+// MODAL — CRIAR CANAL
+// ============================================================
+if (btnCriarCanalDash) {
+  btnCriarCanalDash.addEventListener("click", () => {
+    if (modalCanal) modalCanal.classList.remove("oculto");
   });
 }
 
-async function excluirCanal(canalId) {
-  try {
-    const q = query(collection(db, "historico"), where("canalId", "==", canalId));
-    const snap = await getDocs(q);
-    const batch = writeBatch(db);
-    snap.docs.forEach(d => batch.delete(d.ref));
-    await batch.commit();
-    await deleteDoc(doc(db, "canais", canalId));
-    await carregarCanais();
-    await carregarHistorico(null, true);
-    document.getElementById("status-canal").textContent = "✅ Canal excluído.";
-    document.getElementById("status-canal").className = "status sucesso";
-  } catch (err) {
-    console.error(err);
-    document.getElementById("status-canal").textContent = "Erro ao excluir.";
-    document.getElementById("status-canal").className = "status erro";
-  }
+if (btnFecharModal) {
+  btnFecharModal.addEventListener("click", () => {
+    if (modalCanal) modalCanal.classList.add("oculto");
+  });
 }
 
-document.getElementById("btn-criar-canal").addEventListener("click", async () => {
-  const nome = document.getElementById("input-nome-canal").value.trim();
-  const momento = document.getElementById("select-momento-canal").value;
-  const idioma = document.getElementById("select-idioma-canal").value;
-  const status = document.getElementById("status-canal");
-  if (!nome) { status.textContent = "Digite um nome."; status.className = "status erro"; return; }
-  try {
-    await addDoc(collection(db, "canais"), { nome, momento, idioma, criadoEm: serverTimestamp(), ativo: true });
-    status.textContent = "✅ Canal criado!";
-    status.className = "status sucesso";
-    document.getElementById("input-nome-canal").value = "";
-    await carregarCanais();
-  } catch (err) {
-    status.textContent = "Erro ao criar.";
-    status.className = "status erro";
-  }
-});
+if (modalCanal) {
+  modalCanal.addEventListener("click", (e) => {
+    if (e.target === modalCanal) modalCanal.classList.add("oculto");
+  });
+}
 
-document.getElementById("btn-recarregar-canais").addEventListener("click", carregarCanais);
+if (btnCriarCanal) {
+  btnCriarCanal.addEventListener("click", async () => {
+    if (!inputNomeCanal) return;
+    const nome = inputNomeCanal.value.trim();
+    const momento = selectMomentoCanal ? selectMomentoCanal.value : "madrugada_ansiedade";
+    const idioma = selectIdiomaCanal ? selectIdiomaCanal.value : "pt-BR";
+    if (!statusCanal) return;
+    if (!nome) { statusCanal.textContent = "Digite um nome."; statusCanal.className = "status erro"; return; }
+    try {
+      await addDoc(collection(db, "canais"), { nome, momento, idioma, criadoEm: serverTimestamp(), ativo: true });
+      statusCanal.textContent = "✅ Canal criado!";
+      statusCanal.className = "status sucesso";
+      if (inputNomeCanal) inputNomeCanal.value = "";
+      if (modalCanal) modalCanal.classList.add("oculto");
+      await carregarCanais();
+      renderizarCanaisDashboard();
+    } catch (err) {
+      statusCanal.textContent = "Erro ao criar.";
+      statusCanal.className = "status erro";
+    }
+  });
+}
 
 // ============================================================
 // GERADOR DE TÍTULOS
@@ -361,7 +450,7 @@ async function gerarTitulo(canalId, forcarNovo = false) {
 }
 
 // ============================================================
-// MOTOR DE GERAÇÃO DE PROMPT (FUNÇÕES ESSENCIAIS)
+// MOTOR DE GERAÇÃO DE PROMPT
 // ============================================================
 function calcularParametrosDeDuracao(minutos, ppm) {
   const palavrasAlvo = Math.round(minutos * ppm);
@@ -467,7 +556,6 @@ Se o total geral passar de ${params.palavrasMax} palavras, corte o excesso sem p
 
   texto += "\n" + (inst.final_output || "📤 SAÍDA FINAL\n\nExecute todas as regras acima e entregue apenas o roteiro final.\n\nAgora, escreva o roteiro para o título: <<TITULO>>").replace("<<TITULO>>", params.titulo);
 
-  // Substituir placeholders numéricos
   const substitutos = {
     "<<MINUTOS>>": String(params.minutos),
     "<<PPM>>": String(params.ppm),
@@ -535,16 +623,13 @@ function escolherListaSemRepetir(pool, usadosRecentes, quantidade) {
 // HISTÓRICO POR CANAL
 // ============================================================
 async function carregarHistorico(canalId = null, reiniciar = false) {
-  const lista = document.getElementById("lista-historico");
+  if (!listaHistorico) return;
   const btnMais = document.getElementById("btn-mais-historico");
-  if (reiniciar) { lista.innerHTML = ""; ultimoDocHistorico = null; }
+  if (reiniciar) { listaHistorico.innerHTML = ""; ultimoDocHistorico = null; }
+  if (!canalId) { canalId = canalSelecionadoId; }
   if (!canalId) {
-    const select = document.getElementById("select-canal");
-    canalId = select.value;
-  }
-  if (!canalId || canalId === "") {
-    lista.innerHTML = '<p style="color: var(--texto-fraco);">Selecione um canal.</p>';
-    btnMais.classList.add("oculto");
+    listaHistorico.innerHTML = '<p style="color: var(--texto-fraco);">Selecione um canal.</p>';
+    if (btnMais) btnMais.classList.add("oculto");
     return;
   }
   try {
@@ -556,7 +641,7 @@ async function carregarHistorico(canalId = null, reiniciar = false) {
     }
     const snap = await getDocs(q);
     if (reiniciar && snap.empty) {
-      lista.innerHTML = '<p style="color: var(--texto-fraco);">Nenhum roteiro ainda.</p>';
+      listaHistorico.innerHTML = '<p style="color: var(--texto-fraco);">Nenhum roteiro ainda.</p>';
     }
     snap.docs.forEach((docSnap) => {
       const r = docSnap.data();
@@ -572,12 +657,12 @@ async function carregarHistorico(canalId = null, reiniciar = false) {
           <div class="item-meta">${dataFormatada} · ${duracaoTexto}${momentoLabel} · ${idiomaLabel} · anáfora ${r.limite_anafora ?? "—"} · arquétipos: ${escaparHtml((r.arquetipos_usados || []).join(", "))}</div>
         </div>
       `;
-      lista.appendChild(item);
+      listaHistorico.appendChild(item);
     });
     if (snap.docs.length > 0) {
       ultimoDocHistorico = snap.docs[snap.docs.length - 1];
     }
-    btnMais.classList.toggle("oculto", snap.docs.length < PAGINA_HISTORICO);
+    if (btnMais) btnMais.classList.toggle("oculto", snap.docs.length < PAGINA_HISTORICO);
   } catch (err) {
     console.error("Erro ao carregar histórico:", err);
   }
@@ -589,200 +674,201 @@ function escaparHtml(texto) {
   return div.innerHTML;
 }
 
-document.getElementById("btn-recarregar-historico").addEventListener("click", () => {
-  const canalId = document.getElementById("select-canal").value;
-  carregarHistorico(canalId, true);
-});
+if (btnRecarregarHistorico) {
+  btnRecarregarHistorico.addEventListener("click", () => {
+    carregarHistorico(canalSelecionadoId, true);
+  });
+}
 
-document.getElementById("btn-mais-historico").addEventListener("click", () => {
-  const canalId = document.getElementById("select-canal").value;
-  carregarHistorico(canalId, false);
-});
+if (btnMaisHistorico) {
+  btnMaisHistorico.addEventListener("click", () => {
+    carregarHistorico(canalSelecionadoId, false);
+  });
+}
 
 // ============================================================
-// ABA: GERAR PROMPT (BOTÃO PRINCIPAL)
+// ABA INTERNA: GERAR PROMPT
 // ============================================================
-const inputTitulo = document.getElementById("input-titulo");
-const selectCanal = document.getElementById("select-canal");
-const btnGerar = document.getElementById("btn-gerar");
-const statusGerar = document.getElementById("status-gerar");
-const cartaoResultado = document.getElementById("cartao-resultado");
-const resultadoPrompt = document.getElementById("resultado-prompt");
-const parametrosDetalhe = document.getElementById("parametros-detalhe");
-const btnCopiar = document.getElementById("btn-copiar");
-const cartaoRevisao = document.getElementById("cartao-revisao");
-const resultadoRevisao = document.getElementById("resultado-revisao");
-const btnCopiarRevisao = document.getElementById("btn-copiar-revisao");
-
-// Quando o canal mudar, recarregar o histórico
-selectCanal.addEventListener("change", () => {
-  carregarHistorico(selectCanal.value, true);
+// Navegação entre abas internas
+document.querySelectorAll(".aba-interna").forEach((botao) => {
+  botao.addEventListener("click", () => {
+    document.querySelectorAll(".aba-interna").forEach((b) => b.classList.remove("ativa"));
+    botao.classList.add("ativa");
+    const alvo = botao.dataset.aba;
+    document.querySelectorAll(".painel-interno").forEach((p) => {
+      p.classList.toggle("ativo", p.dataset.painel === alvo);
+    });
+  });
 });
 
 // Gerar Título
-document.getElementById("btn-gerar-titulo").addEventListener("click", async () => {
-  const canalId = selectCanal.value;
-  if (!canalId) { alert("Selecione um canal."); return; }
-  try {
-    const result = await gerarTitulo(canalId, false);
-    ultimoTituloGerado = result.titulo;
-    ultimoArquetipo = result.arquétipo;
-    inputTitulo.value = result.titulo;
-    document.getElementById("badge-arquetipo").textContent = result.arquétipo;
-    const totalVideos = await getTotalVideosCanal(canalId);
-    document.getElementById("video-counter").textContent = `Vídeo #${totalVideos + 1}`;
-    statusGerar.textContent = `✅ Título gerado (${result.arquétipo})`;
-    statusGerar.className = "status sucesso";
-  } catch (err) {
-    alert("Erro: " + err.message);
-  }
-});
+if (btnGerarTitulo) {
+  btnGerarTitulo.addEventListener("click", async () => {
+    if (!canalSelecionadoId) { alert("Selecione um canal."); return; }
+    try {
+      const result = await gerarTitulo(canalSelecionadoId, false);
+      ultimoTituloGerado = result.titulo;
+      ultimoArquetipo = result.arquétipo;
+      if (inputTitulo) inputTitulo.value = result.titulo;
+      if (badgeArquetipo) badgeArquetipo.textContent = result.arquétipo;
+      const q = query(collection(db, "historico"), where("canalId", "==", canalSelecionadoId));
+      const snap = await getDocs(q);
+      if (videoCounter) videoCounter.textContent = `Vídeo #${snap.size + 1}`;
+      if (statusGerar) { statusGerar.textContent = `✅ Título gerado (${result.arquétipo})`; statusGerar.className = "status sucesso"; }
+    } catch (err) {
+      alert("Erro: " + err.message);
+    }
+  });
+}
 
-document.getElementById("btn-refazer-titulo").addEventListener("click", async () => {
-  const canalId = selectCanal.value;
-  if (!canalId) { alert("Selecione um canal."); return; }
-  try {
-    const result = await gerarTitulo(canalId, true);
-    ultimoTituloGerado = result.titulo;
-    ultimoArquetipo = result.arquétipo;
-    inputTitulo.value = result.titulo;
-    document.getElementById("badge-arquetipo").textContent = result.arquétipo;
-    statusGerar.textContent = `🔄 Novo título (${result.arquétipo})`;
-    statusGerar.className = "status sucesso";
-  } catch (err) {
-    alert("Erro: " + err.message);
-  }
-});
-
-async function getTotalVideosCanal(canalId) {
-  const q = query(collection(db, "historico"), where("canalId", "==", canalId));
-  const snap = await getDocs(q);
-  return snap.size;
+if (btnRefazerTitulo) {
+  btnRefazerTitulo.addEventListener("click", async () => {
+    if (!canalSelecionadoId) { alert("Selecione um canal."); return; }
+    try {
+      const result = await gerarTitulo(canalSelecionadoId, true);
+      ultimoTituloGerado = result.titulo;
+      ultimoArquetipo = result.arquétipo;
+      if (inputTitulo) inputTitulo.value = result.titulo;
+      if (badgeArquetipo) badgeArquetipo.textContent = result.arquétipo;
+      if (statusGerar) { statusGerar.textContent = `🔄 Novo título (${result.arquétipo})`; statusGerar.className = "status sucesso"; }
+    } catch (err) {
+      alert("Erro: " + err.message);
+    }
+  });
 }
 
 // Gerar Prompt
-btnGerar.addEventListener("click", async () => {
-  const titulo = inputTitulo.value.trim();
-  const canalId = selectCanal.value;
-  const minutos = parseFloat(document.getElementById("input-minutos").value);
-  const ppm = parseFloat(document.getElementById("input-ppm").value) || PPM_PADRAO;
+if (btnGerar) {
+  btnGerar.addEventListener("click", async () => {
+    const titulo = inputTitulo ? inputTitulo.value.trim() : "";
+    const minutos = inputMinutos ? parseFloat(inputMinutos.value) : 10;
+    const ppm = inputPpm ? parseFloat(inputPpm.value) || PPM_PADRAO : PPM_PADRAO;
 
-  if (!titulo) { statusGerar.textContent = "Digite ou gere um título."; statusGerar.className = "status erro"; return; }
-  if (!canalId) { statusGerar.textContent = "Selecione um canal."; statusGerar.className = "status erro"; return; }
-  if (!minutos || minutos <= 0) { statusGerar.textContent = "Duração inválida."; statusGerar.className = "status erro"; return; }
-  if (!traducoes || !systemPrompts) { statusGerar.textContent = "Dados não carregados."; statusGerar.className = "status erro"; return; }
+    if (!titulo) { if (statusGerar) { statusGerar.textContent = "Digite ou gere um título."; statusGerar.className = "status erro"; } return; }
+    if (!canalSelecionadoId) { if (statusGerar) { statusGerar.textContent = "Selecione um canal."; statusGerar.className = "status erro"; } return; }
+    if (!minutos || minutos <= 0) { if (statusGerar) { statusGerar.textContent = "Duração inválida."; statusGerar.className = "status erro"; } return; }
+    if (!traducoes || !systemPrompts) { if (statusGerar) { statusGerar.textContent = "Dados não carregados."; statusGerar.className = "status erro"; } return; }
 
-  btnGerar.disabled = true;
-  statusGerar.textContent = "Gerando...";
-  statusGerar.className = "status";
+    if (btnGerar) btnGerar.disabled = true;
+    if (statusGerar) { statusGerar.textContent = "Gerando..."; statusGerar.className = "status"; }
 
-  try {
-    const canalDoc = await getDoc(doc(db, "canais", canalId));
-    if (!canalDoc.exists()) throw new Error("Canal não encontrado.");
-    const canalData = canalDoc.data();
-    const momento = canalData.momento;
-    const idioma = canalData.idioma;
+    try {
+      const canalDoc = await getDoc(doc(db, "canais", canalSelecionadoId));
+      if (!canalDoc.exists()) throw new Error("Canal não encontrado.");
+      const canalData = canalDoc.data();
+      const momento = canalData.momento;
+      const idioma = canalData.idioma;
 
-    await carregarBibliaDoStorage(idioma);
+      await carregarBibliaDoStorage(idioma);
 
-    const langData = traducoes.languages?.[idioma] || {};
-    const momentTemplates = traducoes.moment_templates || {};
-    const templateBlocos = momentTemplates[momento]?.[idioma] || momentTemplates[momento]?.["pt-BR"] || "";
+      const langData = traducoes.languages?.[idioma] || {};
+      const momentTemplates = traducoes.moment_templates || {};
+      const templateBlocos = momentTemplates[momento]?.[idioma] || momentTemplates[momento]?.["pt-BR"] || "";
 
-    const q = query(collection(db, "historico"), where("canalId", "==", canalId), orderBy("criadoEm", "desc"), limit(JANELA_REPETICAO));
-    const histSnap = await getDocs(q);
-    const historicoRecente = histSnap.docs.map((d) => d.data());
+      const q = query(collection(db, "historico"), where("canalId", "==", canalSelecionadoId), orderBy("criadoEm", "desc"), limit(JANELA_REPETICAO));
+      const histSnap = await getDocs(q);
+      const historicoRecente = histSnap.docs.map((d) => d.data());
 
-    const arquetiposUsadosRecentes = itensUsadosRecentemente(historicoRecente, "arquetipos_usados");
-    const casosUsadosRecentes = itensUsadosRecentemente(historicoRecente, "casos_usados");
+      const arquetiposUsadosRecentes = itensUsadosRecentemente(historicoRecente, "arquetipos_usados");
+      const casosUsadosRecentes = itensUsadosRecentemente(historicoRecente, "casos_usados");
 
-    const duracao = calcularParametrosDeDuracao(minutos, ppm);
-    const distribuicao = gerarDistribuicaoBlocos();
+      const duracao = calcularParametrosDeDuracao(minutos, ppm);
+      const distribuicao = gerarDistribuicaoBlocos();
 
-    let poolsArquetipos = ["ansiedade", "medo", "solidão", "preocupação", "insônia", "desânimo", "cansaço", "dúvida"];
-    let poolsCasos = ["Salmo 91", "Salmo 23", "Mateus 11:28", "Filipenses 4:6-7", "Isaías 41:10", "João 14:27"];
+      let poolsArquetipos = ["ansiedade", "medo", "solidão", "preocupação", "insônia", "desânimo", "cansaço", "dúvida"];
+      let poolsCasos = ["Salmo 91", "Salmo 23", "Mateus 11:28", "Filipenses 4:6-7", "Isaías 41:10", "João 14:27"];
 
-    if (rawTitles) {
-      const todasPalavras = [];
-      for (const canal of Object.values(rawTitles)) {
-        for (const fase of ["antigos", "recentes", "virais"]) {
-          for (const item of (canal[fase] || [])) {
-            const palavras = (item.title || "").toLowerCase().split(/\s+/);
-            todasPalavras.push(...palavras);
+      if (rawTitles) {
+        const todasPalavras = [];
+        for (const canal of Object.values(rawTitles)) {
+          for (const fase of ["antigos", "recentes", "virais"]) {
+            for (const item of (canal[fase] || [])) {
+              const palavras = (item.title || "").toLowerCase().split(/\s+/);
+              todasPalavras.push(...palavras);
+            }
           }
         }
-      }
-      if (todasPalavras.length > 0) {
-        const contagem = {};
-        for (const p of todasPalavras) {
-          if (p.length > 3) contagem[p] = (contagem[p] || 0) + 1;
+        if (todasPalavras.length > 0) {
+          const contagem = {};
+          for (const p of todasPalavras) {
+            if (p.length > 3) contagem[p] = (contagem[p] || 0) + 1;
+          }
+          const ordenadas = Object.entries(contagem).sort((a, b) => b[1] - a[1]);
+          const top10 = ordenadas.slice(0, 10).map(([p]) => p);
+          if (top10.length > 0) poolsArquetipos = top10;
         }
-        const ordenadas = Object.entries(contagem).sort((a, b) => b[1] - a[1]);
-        const top10 = ordenadas.slice(0, 10).map(([p]) => p);
-        if (top10.length > 0) poolsArquetipos = top10;
       }
+
+      const params = {
+        titulo,
+        ...duracao,
+        limite_anafora: escolherNumeroSemRepetir([2, 3, 4], historicoRecente, "limite_anafora"),
+        distribuicao,
+        palavrasPorBloco: calcularPalavrasPorBloco(distribuicao, duracao.palavrasAlvo),
+        arquetipos_evitar: escolherListaSemRepetir(poolsArquetipos, arquetiposUsadosRecentes, QTD_ARQUETIPOS_SUGERIDOS),
+        casos_evitar: escolherListaSemRepetir(poolsCasos, casosUsadosRecentes, QTD_CASOS_SUGERIDOS),
+      };
+
+      const promptFinal = montarPrompt(params, langData, templateBlocos);
+      if (resultadoPrompt) resultadoPrompt.value = promptFinal;
+      if (parametrosDetalhe) {
+        parametrosDetalhe.textContent = JSON.stringify(
+          { canal: canalData.nome, momento, idioma, minutos: params.minutos, ppm: params.ppm, palavras_alvo: params.palavrasAlvo, palavras_min: params.palavrasMin, palavras_max: params.palavrasMax, perguntas_min: params.perguntasMin, humor_min: params.humorMin, limite_anafora: params.limite_anafora, distribuicao_blocos: params.distribuicao, arquetipos_evitar: params.arquetipos_evitar, casos_evitar: params.casos_evitar },
+          null, 2
+        );
+      }
+      if (cartaoResultado) cartaoResultado.classList.remove("oculto");
+
+      const revisao = montarMensagemRevisao(params, langData);
+      if (resultadoRevisao) resultadoRevisao.value = revisao;
+      if (cartaoRevisao) cartaoRevisao.classList.remove("oculto");
+
+      await addDoc(collection(db, "historico"), {
+        canalId: canalSelecionadoId,
+        titulo,
+        criadoEm: serverTimestamp(),
+        minutos: params.minutos,
+        palavras_alvo: params.palavrasAlvo,
+        limite_anafora: params.limite_anafora,
+        distribuicao_blocos: params.distribuicao,
+        momento,
+        idioma,
+        arquetipos_usados: params.arquetipos_evitar.slice(0, 3),
+        casos_usados: params.casos_evitar.slice(0, 3),
+        arquetipo_usado: ultimoArquetipo || null,
+      });
+
+      if (statusGerar) { statusGerar.textContent = "✅ Prompt gerado!"; statusGerar.className = "status sucesso"; }
+      carregarHistorico(canalSelecionadoId, true);
+      atualizarContadorVideos(canalSelecionadoId);
+    } catch (err) {
+      console.error(err);
+      if (statusGerar) { statusGerar.textContent = "Erro: " + err.message; statusGerar.className = "status erro"; }
+    } finally {
+      if (btnGerar) btnGerar.disabled = false;
     }
+  });
+}
 
-    const params = {
-      titulo,
-      ...duracao,
-      limite_anafora: escolherNumeroSemRepetir([2, 3, 4], historicoRecente, "limite_anafora"),
-      distribuicao,
-      palavrasPorBloco: calcularPalavrasPorBloco(distribuicao, duracao.palavrasAlvo),
-      arquetipos_evitar: escolherListaSemRepetir(poolsArquetipos, arquetiposUsadosRecentes, QTD_ARQUETIPOS_SUGERIDOS),
-      casos_evitar: escolherListaSemRepetir(poolsCasos, casosUsadosRecentes, QTD_CASOS_SUGERIDOS),
-    };
+// Copiar Prompt
+if (btnCopiar) {
+  btnCopiar.addEventListener("click", async () => {
+    if (!resultadoPrompt) return;
+    try { await navigator.clipboard.writeText(resultadoPrompt.value); btnCopiar.textContent = "Copiado!"; }
+    catch { resultadoPrompt.select(); document.execCommand("copy"); btnCopiar.textContent = "Copiado!"; }
+    setTimeout(() => { btnCopiar.textContent = "Copiar"; }, 1500);
+  });
+}
 
-    const promptFinal = montarPrompt(params, langData, templateBlocos);
-    resultadoPrompt.value = promptFinal;
-    parametrosDetalhe.textContent = JSON.stringify(
-      { canal: canalData.nome, momento, idioma, minutos: params.minutos, ppm: params.ppm, palavras_alvo: params.palavrasAlvo, palavras_min: params.palavrasMin, palavras_max: params.palavrasMax, perguntas_min: params.perguntasMin, humor_min: params.humorMin, limite_anafora: params.limite_anafora, distribuicao_blocos: params.distribuicao, arquetipos_evitar: params.arquetipos_evitar, casos_evitar: params.casos_evitar },
-      null, 2
-    );
-    cartaoResultado.classList.remove("oculto");
-
-    const revisao = montarMensagemRevisao(params, langData);
-    resultadoRevisao.value = revisao;
-    cartaoRevisao.classList.remove("oculto");
-
-    await addDoc(collection(db, "historico"), {
-      canalId: canalId,
-      titulo,
-      criadoEm: serverTimestamp(),
-      minutos: params.minutos,
-      palavras_alvo: params.palavrasAlvo,
-      limite_anafora: params.limite_anafora,
-      distribuicao_blocos: params.distribuicao,
-      momento,
-      idioma,
-      arquetipos_usados: params.arquetipos_evitar.slice(0, 3),
-      casos_usados: params.casos_evitar.slice(0, 3),
-      arquetipo_usado: ultimoArquetipo || null,
-    });
-
-    statusGerar.textContent = "✅ Prompt gerado!";
-    statusGerar.className = "status sucesso";
-    carregarHistorico(canalId, true);
-  } catch (err) {
-    console.error(err);
-    statusGerar.textContent = "Erro: " + err.message;
-    statusGerar.className = "status erro";
-  } finally {
-    btnGerar.disabled = false;
-  }
-});
-
-btnCopiar.addEventListener("click", async () => {
-  try { await navigator.clipboard.writeText(resultadoPrompt.value); btnCopiar.textContent = "Copiado!"; }
-  catch { resultadoPrompt.select(); document.execCommand("copy"); btnCopiar.textContent = "Copiado!"; }
-  setTimeout(() => { btnCopiar.textContent = "Copiar"; }, 1500);
-});
-
-btnCopiarRevisao.addEventListener("click", async () => {
-  try { await navigator.clipboard.writeText(resultadoRevisao.value); btnCopiarRevisao.textContent = "Copiado!"; }
-  catch { resultadoRevisao.select(); document.execCommand("copy"); btnCopiarRevisao.textContent = "Copiado!"; }
-  setTimeout(() => { btnCopiarRevisao.textContent = "Copiar"; }, 1500);
-});
+// Copiar Revisão
+if (btnCopiarRevisao) {
+  btnCopiarRevisao.addEventListener("click", async () => {
+    if (!resultadoRevisao) return;
+    try { await navigator.clipboard.writeText(resultadoRevisao.value); btnCopiarRevisao.textContent = "Copiado!"; }
+    catch { resultadoRevisao.select(); document.execCommand("copy"); btnCopiarRevisao.textContent = "Copiado!"; }
+    setTimeout(() => { btnCopiarRevisao.textContent = "Copiar"; }, 1500);
+  });
+}
 
 // ============================================================
 // ABA: FORMATAR PARÁGRAFOS
@@ -810,45 +896,28 @@ function formatarParagrafos(texto, maxFrasesPorParagrafo = 3) {
   return { textoFormatado: paragrafosFinais.join("\n"), totalAjustados, totalParagrafosOriginais: paragrafosOriginais.length };
 }
 
-const entradaFormatar = document.getElementById("entrada-formatar");
-const btnFormatar = document.getElementById("btn-formatar");
-const statusFormatar = document.getElementById("status-formatar");
-const cartaoFormatado = document.getElementById("cartao-formatado");
-const resultadoFormatado = document.getElementById("resultado-formatado");
-const btnCopiarFormatado = document.getElementById("btn-copiar-formatado");
-
-btnFormatar.addEventListener("click", () => {
-  const texto = entradaFormatar.value.trim();
-  if (!texto) { statusFormatar.textContent = "Cole o roteiro."; statusFormatar.className = "status erro"; return; }
-  const { textoFormatado, totalAjustados, totalParagrafosOriginais } = formatarParagrafos(texto);
-  resultadoFormatado.value = textoFormatado;
-  cartaoFormatado.classList.remove("oculto");
-  statusFormatar.textContent = totalAjustados > 0 ? `${totalAjustados} de ${totalParagrafosOriginais} ajustados.` : "Nenhum parágrafo com mais de 3 frases.";
-  statusFormatar.className = "status sucesso";
-});
-
-btnCopiarFormatado.addEventListener("click", async () => {
-  try { await navigator.clipboard.writeText(resultadoFormatado.value); btnCopiarFormatado.textContent = "Copiado!"; }
-  catch { resultadoFormatado.select(); document.execCommand("copy"); btnCopiarFormatado.textContent = "Copiado!"; }
-  setTimeout(() => { btnCopiarFormatado.textContent = "Copiar"; }, 1500);
-});
-
-// ============================================================
-// NAVEGAÇÃO POR ABAS
-// ============================================================
-document.querySelectorAll(".aba").forEach((botao) => {
-  botao.addEventListener("click", () => {
-    document.querySelectorAll(".aba").forEach((b) => {
-      b.classList.remove("ativa");
-      b.setAttribute("aria-selected", "false");
-    });
-    botao.classList.add("ativa");
-    botao.setAttribute("aria-selected", "true");
-    const alvo = botao.dataset.aba;
-    document.querySelectorAll(".painel").forEach((p) => {
-      p.classList.toggle("ativo", p.dataset.painel === alvo);
-    });
+if (btnFormatar) {
+  btnFormatar.addEventListener("click", () => {
+    if (!entradaFormatar) return;
+    const texto = entradaFormatar.value.trim();
+    if (!texto) { if (statusFormatar) { statusFormatar.textContent = "Cole o roteiro."; statusFormatar.className = "status erro"; } return; }
+    const { textoFormatado, totalAjustados, totalParagrafosOriginais } = formatarParagrafos(texto);
+    if (resultadoFormatado) resultadoFormatado.value = textoFormatado;
+    if (cartaoFormatado) cartaoFormatado.classList.remove("oculto");
+    if (statusFormatar) {
+      statusFormatar.textContent = totalAjustados > 0 ? `${totalAjustados} de ${totalParagrafosOriginais} ajustados.` : "Nenhum parágrafo com mais de 3 frases.";
+      statusFormatar.className = "status sucesso";
+    }
   });
-});
+}
+
+if (btnCopiarFormatado) {
+  btnCopiarFormatado.addEventListener("click", async () => {
+    if (!resultadoFormatado) return;
+    try { await navigator.clipboard.writeText(resultadoFormatado.value); btnCopiarFormatado.textContent = "Copiado!"; }
+    catch { resultadoFormatado.select(); document.execCommand("copy"); btnCopiarFormatado.textContent = "Copiado!"; }
+    setTimeout(() => { btnCopiarFormatado.textContent = "Copiar"; }, 1500);
+  });
+}
 
 console.log("✅ Faith Prompt Engine carregado!");
