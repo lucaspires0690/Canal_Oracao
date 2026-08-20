@@ -11,7 +11,7 @@
 </head>
 <body>
 
-<div class="app-wrapper" id="app">
+<div class="app-wrapper">
   
   <!-- ============================================================ -->
   <!-- TELA DE LOGIN -->
@@ -59,91 +59,89 @@
     </nav>
 
     <!-- ============================================================ -->
-<!-- PAINEL: GERAR — ESTRUTURA EM GRADE -->
-<!-- ============================================================ -->
-<div class="painel ativo" data-painel="gerar">
-  
-  <!-- GRADE 2x2: Canal + Duração / Título + PPM -->
-  <div class="grid-2">
-    
-    <!-- Canal -->
-    <div class="cartao">
-      <label for="select-canal">📌 Canal</label>
-      <select id="select-canal">
-        <option value="">— Carregando canais —</option>
-      </select>
-      <button id="btn-recarregar-canais" class="btn btn-ghost btn-sm">↻ Recarregar</button>
-    </div>
+    <!-- PAINEL: GERAR — ESTRUTURA EM GRADE 2x2 -->
+    <!-- ============================================================ -->
+    <div class="painel ativo" data-painel="gerar">
+      
+      <!-- GRADE 2x2: Canal + Duração / Título + PPM -->
+      <div class="grid-2">
+        
+        <!-- Canal -->
+        <div class="cartao">
+          <label for="select-canal">📌 Canal</label>
+          <select id="select-canal">
+            <option value="">— Carregando canais —</option>
+          </select>
+          <button id="btn-recarregar-canais" class="btn btn-ghost btn-sm" style="margin-top: 4px;">↻ Recarregar</button>
+        </div>
 
-    <!-- Duração -->
-    <div class="cartao">
-      <label for="input-minutos">⏱️ Duração (min)</label>
-      <input type="number" id="input-minutos" min="1" step="0.5" value="10" />
-    </div>
+        <!-- Duração -->
+        <div class="cartao">
+          <label for="input-minutos">⏱️ Duração (min)</label>
+          <input type="number" id="input-minutos" min="1" step="0.5" value="10" />
+        </div>
 
-    <!-- Título -->
-    <div class="cartao" style="grid-column: span 2;">
-      <label for="input-titulo">📝 Título do vídeo</label>
-      <div class="input-group">
-        <input type="text" id="input-titulo" placeholder="Digite ou gere um título..." />
-        <button id="btn-gerar-titulo" class="btn btn-secundario btn-sm" title="Gerar título com IA">✨</button>
-        <button id="btn-refazer-titulo" class="btn btn-secundario btn-sm" title="Refazer título">🔄</button>
+        <!-- Título (ocupa 2 colunas) -->
+        <div class="cartao" style="grid-column: span 2;">
+          <label for="input-titulo">📝 Título do vídeo</label>
+          <div class="input-group">
+            <input type="text" id="input-titulo" placeholder="Digite ou gere um título..." />
+            <button id="btn-gerar-titulo" class="btn btn-secundario btn-sm" title="Gerar título com IA">✨</button>
+            <button id="btn-refazer-titulo" class="btn btn-secundario btn-sm" title="Refazer título">🔄</button>
+          </div>
+          <div class="titulo-status">
+            <span class="badge-status" id="badge-arquetipo">—</span>
+            <span id="video-counter">Vídeo #0</span>
+          </div>
+        </div>
       </div>
-      <div class="titulo-status">
-        <span class="badge-status" id="badge-arquetipo">—</span>
-        <span id="video-counter">Vídeo #0</span>
+
+      <!-- LINHA: PPM + espaço informativo -->
+      <div class="grid-2">
+        <div class="cartao">
+          <label for="input-ppm">🔊 Palavras/min (TTS)</label>
+          <input type="number" id="input-ppm" min="50" step="5" value="150" />
+        </div>
+        <div class="cartao" style="display: flex; flex-direction: column; justify-content: flex-end;">
+          <p style="color: var(--texto-fraco); font-size: 0.85rem; margin: 0;">
+            💡 Ajuste conforme a velocidade do seu TTS.
+          </p>
+        </div>
       </div>
-    </div>
-  </div>
 
-  <!-- LINHA: PPM (agora separado, mas pode ficar na grade) -->
-  <div class="grid-2">
-    <div class="cartao">
-      <label for="input-ppm">🔊 Palavras/min (TTS)</label>
-      <input type="number" id="input-ppm" min="50" step="5" value="150" />
-    </div>
-    <div class="cartao" style="display: flex; flex-direction: column; justify-content: flex-end;">
-      <!-- Espaço vazio ou info adicional -->
-      <p style="color: var(--texto-fraco); font-size: 0.85rem; margin: 0;">
-        💡 Ajuste conforme a velocidade do seu TTS.
-      </p>
-    </div>
-  </div>
+      <!-- BOTÃO GERAR — OCUPA A LARGURA TOTAL -->
+      <button id="btn-gerar" class="btn btn-primary btn-lg">🚀 Gerar Prompt</button>
+      <p class="status" id="status-gerar"></p>
 
-  <!-- BOTÃO GERAR — OCUPA A LARGURA TOTAL -->
-  <button id="btn-gerar" class="btn btn-primary btn-lg">🚀 Gerar Prompt</button>
-  <p class="status" id="status-gerar"></p>
+      <!-- RESULTADO: PROMPT -->
+      <div class="cartao oculto" id="cartao-resultado" style="flex: 1; min-height: 200px;">
+        <div class="cartao-header">
+          <h2>📋 Prompt pronto</h2>
+          <button id="btn-copiar" class="btn btn-ghost btn-sm">📄 Copiar</button>
+        </div>
+        <textarea id="resultado-prompt" readonly spellcheck="false" style="flex: 1; min-height: 180px;"></textarea>
+        <details>
+          <summary>📊 Parâmetros sorteados</summary>
+          <pre id="parametros-detalhe"></pre>
+        </details>
+      </div>
 
-  <!-- RESULTADO: PROMPT -->
-  <div class="cartao oculto" id="cartao-resultado" style="flex: 1; min-height: 200px;">
-    <div class="cartao-header">
-      <h2>📋 Prompt pronto</h2>
-      <button id="btn-copiar" class="btn btn-ghost btn-sm">📄 Copiar</button>
+      <!-- RESULTADO: REVISÃO -->
+      <div class="cartao oculto" id="cartao-revisao">
+        <div class="cartao-header">
+          <h2>🔁 Mensagem de revisão</h2>
+          <button id="btn-copiar-revisao" class="btn btn-ghost btn-sm">📄 Copiar</button>
+        </div>
+        <textarea id="resultado-revisao" readonly spellcheck="false"></textarea>
+      </div>
+
     </div>
-    <textarea id="resultado-prompt" readonly spellcheck="false" style="flex: 1; min-height: 180px;"></textarea>
-    <details>
-      <summary>📊 Parâmetros sorteados</summary>
-      <pre id="parametros-detalhe"></pre>
-    </details>
-  </div>
-
-  <!-- RESULTADO: REVISÃO -->
-  <div class="cartao oculto" id="cartao-revisao">
-    <div class="cartao-header">
-      <h2>🔁 Mensagem de revisão</h2>
-      <button id="btn-copiar-revisao" class="btn btn-ghost btn-sm">📄 Copiar</button>
-    </div>
-    <textarea id="resultado-revisao" readonly spellcheck="false"></textarea>
-  </div>
-
-</div>
 
     <!-- ============================================================ -->
     <!-- PAINEL: CANAIS -->
     <!-- ============================================================ -->
     <div class="painel" data-painel="canais">
       
-      <!-- CADASTRAR -->
       <div class="cartao">
         <h2>➕ Novo canal</h2>
         <div class="grid-2">
@@ -178,7 +176,6 @@
         <p class="status" id="status-canal"></p>
       </div>
 
-      <!-- LISTA DE CANAIS -->
       <div class="cartao">
         <div class="cartao-header">
           <h2>📁 Meus canais</h2>
