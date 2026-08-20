@@ -40,11 +40,16 @@ import {
   ref,
   getDownloadURL,
 } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-storage.js";
+import {
+  getFunctions,
+  httpsCallable,
+} from "https://www.gstatic.com/firebasejs/12.15.0/firebase-functions.js";
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 const storage = getStorage(app);
+const functions = getFunctions(app);
 
 // ============================================================
 // CONSTANTES E URLs
@@ -60,7 +65,6 @@ const URL_TRANSLATIONS = GITHUB_BASE + "translations.json";
 const URL_SYSTEM_PROMPTS = GITHUB_BASE + "system_prompts.json";
 const URL_VALIDATED_RULES = GITHUB_BASE + "validated_rules.json";
 const URL_RAW_TITLES = GITHUB_BASE + "raw_titles.json";
-// ========== NOVA URL ==========
 const URL_TITLE_PATTERNS = GITHUB_BASE + "title_patterns.json";
 
 const BIBLE_MAP = {
@@ -70,22 +74,6 @@ const BIBLE_MAP = {
   "fr": "lsg.json",
   "ko": "krv.json"
 };
-
-// ---------- BANCOS PARA GERADOR DE TÍTULOS (FALLBACK) ----------
-const ARQUETIPOS = [
-  { id: "comando", peso: 30, label: "Comando" },
-  { id: "pergunta", peso: 25, label: "Pergunta" },
-  { id: "declaracao", peso: 25, label: "Declaração" },
-  { id: "curiosidade", peso: 20, label: "Curiosidade" }
-];
-const COMANDOS = ["Ore", "Diga", "Ouça", "Comece", "Faça", "Entregue", "Clame"];
-const DORES = {
-  "manha_disposicao": ["novo dia", "disposição", "propósito", "fé", "renovação", "gratidão"],
-  "madrugada_ansiedade": ["ansiedade", "medo", "preocupação", "insônia", "coração acelerado", "angústia", "desespero"],
-  "noite_sono": ["insônia", "preocupação", "cansaço", "dormir", "descanso", "paz"]
-};
-const PROMESSAS = ["paz", "proteção", "descanso", "força", "esperança", "alívio", "cura"];
-const TEMAS_CURIOSIDADE = ["Sinais", "Sintomas", "Hábitos", "Motivos", "Atitudes", "Erros"];
 
 // ============================================================
 // ESTADO GLOBAL
@@ -99,7 +87,6 @@ let canais = [];
 let ultimoDocHistorico = null;
 let ultimoTituloGerado = "";
 let ultimoArquetipo = "";
-// ========== NOVA VARIÁVEL ==========
 let titlePatterns = null;
 
 // ============================================================
@@ -153,7 +140,6 @@ onAuthStateChanged(auth, async (user) => {
 // ============================================================
 async function carregarDados(user) {
   try {
-    // ========== MODIFICADO: Adicionado 'patterns' ==========
     const [trad, prompts, rules, titles, patterns] = await Promise.all([
       fetch(URL_TRANSLATIONS).then(r => r.json()),
       fetch(URL_SYSTEM_PROMPTS).then(r => r.json()),
@@ -165,7 +151,7 @@ async function carregarDados(user) {
     systemPrompts = prompts;
     validatedRules = rules;
     rawTitles = titles;
-    titlePatterns = patterns; // ========== NOVO ==========
+    titlePatterns = patterns;
     console.log("✅ Dados carregados do GitHub");
     if (user) await carregarBibliaDoStorage("pt-BR");
   } catch (err) {
@@ -291,111 +277,71 @@ document.getElementById("btn-criar-canal").addEventListener("click", async () =>
 document.getElementById("btn-recarregar-canais").addEventListener("click", carregarCanais);
 
 // ============================================================
-// GERADOR DE TÍTULOS (REESCRITO COM titlePatterns)
+// CHAMADA DA API (GPT-4o VIA CLOUD FUNCTION)
 // ============================================================
-function escolherArquetipo(historicoRecente) {
-  const contagem = { comando: 0, pergunta: 0, declaracao: 0, curiosidade: 0 };
-  const ultimos5 = historicoRecente.slice(0, 5);
-  for (const item of ultimos5) {
-    if (item.arquetipo_usado) contagem[item.arquetipo_usado] = (contagem[item.arquetipo_usado] || 0) + 1;
-  }
-  const disponiveis = ARQUETIPOS.filter(a => contagem[a.id] < 2);
-  if (disponiveis.length === 0) {
-    const totalPeso = ARQUETIPOS.reduce((s, a) => s + a.peso, 0);
-    let rand = Math.random() * totalPeso;
-    for (const a of ARQUETIPOS) {
-      rand -= a.peso;
-      if (rand <= 0) return a.id;
-    }
-  }
-  return disponiveis[Math.floor(Math.random() * disponiveis.length)].id;
-}
+const gerarTituloAPI = httpsCallable(functions, 'gerarTitulo');
 
-function capitalize(str) {
-  return str.charAt(0).toUpperCase() + str.slice(1);
-}
-
-// ========== FUNÇÃO GERAR TITULO REEESCRITA ==========
-async function gerarTitulo(canalId, forcarNovo = false) {
+async function gerarTituloComIA(canalId, forcarNovo = false) {
   try {
-    const canalDoc = await getDoc(doc(db, "canais", canalId));
-    if (!canalDoc.exists()) throw new Error("Canal não encontrado.");
-    const canal = canalDoc.data();
+    const canal = canais.find(c => c.id === canalId);
+    if (!canal) throw new Error("Canal não encontrado.");
 
-    const q = query(collection(db, "historico"), where("canalId", "==", canalId), orderBy("criadoEm", "desc"), limit(10));
-    const snap = await getDocs(q);
-    const historicoRecente = snap.docs.map(d => d.data());
+    // Buscar os dados brutos para enviar como contexto
+    const contexto = {
+      rawTitles: rawTitles,
+      titlePatterns: titlePatterns,
+      canal: canal,
+      forcarNovo: forcarNovo,
+      ultimoTitulo: ultimoTituloGerado
+    };
 
-    let arquétipo = escolherArquetipo(historicoRecente);
-    if (forcarNovo) {
-      const outros = ARQUETIPOS.filter(a => a.id !== arquétipo);
-      arquétipo = outros[Math.floor(Math.random() * outros.length)].id;
+    const result = await gerarTituloAPI({
+      tema: canal.nome,
+      momento: canal.momento,
+      canalId: canalId,
+      contexto: JSON.stringify(contexto)
+    });
+
+    // A função retorna { titulos: [...] }
+    const titulos = result.data.titulos;
+    if (!titulos || titulos.length === 0) {
+      throw new Error("Nenhum título gerado pela IA.");
     }
 
-    // ========== USAR titlePatterns se disponível ==========
-    let palavras = {};
-    if (titlePatterns && titlePatterns.words) {
-      const success = titlePatterns.words.success || {};
-      const momentoKey = canal.momento.includes("manha") ? "manha" : 
-                          canal.momento.includes("madrugada") ? "madrugada" : "noite";
-      palavras = {
-        comando: (success.imperativos || COMANDOS)[Math.floor(Math.random() * (success.imperativos || COMANDOS).length)],
-        dor: (success.dores || DORES[canal.momento] || DORES["madrugada_ansiedade"])[Math.floor(Math.random() * (success.dores || DORES[canal.momento] || DORES["madrugada_ansiedade"]).length)],
-        promessa: (success.beneficios || PROMESSAS)[Math.floor(Math.random() * (success.beneficios || PROMESSAS).length)],
-        momento: ((success.momentos || {})[momentoKey] || ["hoje"])[Math.floor(Math.random() * ((success.momentos || {})[momentoKey] || ["hoje"]).length)],
-        contexto: (success.contextos || ["sua vida"])[Math.floor(Math.random() * (success.contextos || ["sua vida"]).length)],
-        sinal: (success.sinais || TEMAS_CURIOSIDADE)[Math.floor(Math.random() * (success.sinais || TEMAS_CURIOSIDADE).length)],
-        numero: (success.numeros || ["3", "5", "7", "10"])[Math.floor(Math.random() * (success.numeros || ["3", "5", "7", "10"]).length)]
-      };
+    // Selecionar o primeiro título da lista (ou um aleatório)
+    const tituloEscolhido = titulos[Math.floor(Math.random() * titulos.length)];
+    const arquétipo = "IA-GPT4o";
+
+    // Salvar como rascunho no histórico
+    await addDoc(collection(db, "historico"), {
+      canalId: canalId,
+      titulo: tituloEscolhido,
+      status: "rascunho",
+      padrao_usado: arquétipo,
+      palavras_chave: [],
+      criadoEm: serverTimestamp(),
+      momento: canal.momento,
+      idioma: canal.idioma,
+      fonte: "GPT-4o"
+    });
+
+    return { titulo: tituloEscolhido, arquétipo, todos: titulos };
+
+  } catch (error) {
+    console.error("❌ Erro na API:", error);
+    
+    // Mensagens amigáveis para o usuário
+    let mensagem = "Erro ao gerar títulos. ";
+    if (error.message.includes("permission") || error.message.includes("auth")) {
+      mensagem += "Verifique sua autenticação no Firebase.";
+    } else if (error.message.includes("quota") || error.message.includes("credit")) {
+      mensagem += "Créditos da API OpenAI esgotados. Recarregue a página e tente novamente.";
+    } else if (error.message.includes("timeout")) {
+      mensagem += "A requisição demorou muito. Tente novamente.";
     } else {
-      // Fallback: usar listas locais
-      const doresDoMomento = DORES[canal.momento] || DORES["madrugada_ansiedade"];
-      palavras = {
-        comando: COMANDOS[Math.floor(Math.random() * COMANDOS.length)],
-        dor: doresDoMomento[Math.floor(Math.random() * doresDoMomento.length)],
-        promessa: PROMESSAS[Math.floor(Math.random() * PROMESSAS.length)],
-        momento: "hoje",
-        contexto: "sua vida",
-        sinal: TEMAS_CURIOSIDADE[Math.floor(Math.random() * TEMAS_CURIOSIDADE.length)],
-        numero: ["3", "5", "7", "10"][Math.floor(Math.random() * 4)]
-      };
+      mensagem += error.message || "Tente novamente mais tarde.";
     }
-
-    let titulo = "";
-    switch (arquétipo) {
-      case "comando":
-        titulo = `${palavras.comando} Isso ${palavras.momento} e Encontre ${capitalize(palavras.promessa)}`;
-        break;
-      case "pergunta":
-        const perguntas = [
-          `${capitalize(palavras.dor)}? ${palavras.comando} Esta Oração e ${capitalize(palavras.promessa)}`,
-          `Está com ${capitalize(palavras.dor)}? ${palavras.comando} Isso Agora`
-        ];
-        titulo = perguntas[Math.floor(Math.random() * perguntas.length)];
-        break;
-      case "declaracao":
-        titulo = `Que a ${capitalize(palavras.promessa)} de Deus Esteja Sobre ${capitalize(palavras.contexto)}`;
-        break;
-      case "curiosidade":
-        titulo = `${palavras.numero} ${palavras.sinal} de que Deus ${capitalize(palavras.promessa)} Você`;
-        break;
-      default:
-        titulo = `${palavras.comando} Isso ${palavras.momento} e Encontre ${capitalize(palavras.promessa)}`;
-    }
-
-    // ========== VERIFICAR PALAVRAS PROIBIDAS ==========
-    if (titlePatterns && titlePatterns.words && titlePatterns.words.failure) {
-      const proibidas = titlePatterns.words.failure.palavras || [];
-      if (proibidas.some(p => titulo.toLowerCase().includes(p))) {
-        console.warn("Título com palavra proibida, tentando novamente...");
-        return gerarTitulo(canalId, forcarNovo);
-      }
-    }
-
-    return { titulo, arquétipo };
-  } catch (err) {
-    console.error("Erro ao gerar título:", err);
-    throw err;
+    throw new Error(mensagem);
   }
 }
 
@@ -604,7 +550,7 @@ async function carregarHistorico(canalId = null, reiniciar = false) {
       const dataFormatada = r.criadoEm?.toDate?.()?.toLocaleString?.("pt-BR") || "—";
       const momentoLabel = r.momento || "—";
       const idiomaLabel = r.idioma || "—";
-      const duracaoTexto = r.minutos ? `${r.minutos} min (${r.palavras_alvo || "?"} palavras) · ` : "";
+      const duracaoTexto = r.minutos ? `${r.minutos} min (${r.palavras_alvo || "?"} palabras) · ` : "";
       item.innerHTML = `
         <div>
           <div class="item-titulo">${escaparHtml(r.titulo || "(sem título)")}</div>
@@ -658,38 +604,77 @@ selectCanal.addEventListener("change", () => {
   carregarHistorico(selectCanal.value, true);
 });
 
-// Gerar Título
+// ============================================================
+// GERAR TÍTULO VIA API (NOVO BOTÃO)
+// ============================================================
 document.getElementById("btn-gerar-titulo").addEventListener("click", async () => {
   const canalId = selectCanal.value;
-  if (!canalId) { alert("Selecione um canal."); return; }
+  if (!canalId) {
+    statusGerar.textContent = "⚠️ Selecione um canal primeiro.";
+    statusGerar.className = "status erro";
+    return;
+  }
+  
+  statusGerar.textContent = "⏳ Gerando títulos com IA...";
+  statusGerar.className = "status";
+  btnGerar.disabled = true;
+
   try {
-    const result = await gerarTitulo(canalId, false);
+    const result = await gerarTituloComIA(canalId, false);
     ultimoTituloGerado = result.titulo;
     ultimoArquetipo = result.arquétipo;
     inputTitulo.value = result.titulo;
-    document.getElementById("badge-arquetipo").textContent = result.arquétipo;
+    document.getElementById("badge-arquetipo").textContent = "GPT-4o";
     const totalVideos = await getTotalVideosCanal(canalId);
     document.getElementById("video-counter").textContent = `Vídeo #${totalVideos + 1}`;
-    statusGerar.textContent = `✅ Título gerado (${result.arquétipo})`;
+    statusGerar.textContent = `✅ Título gerado com GPT-4o: "${result.titulo}"`;
     statusGerar.className = "status sucesso";
   } catch (err) {
-    alert("Erro: " + err.message);
+    console.error(err);
+    statusGerar.textContent = `❌ ${err.message}`;
+    statusGerar.className = "status erro";
+  } finally {
+    btnGerar.disabled = false;
   }
 });
 
 document.getElementById("btn-refazer-titulo").addEventListener("click", async () => {
   const canalId = selectCanal.value;
-  if (!canalId) { alert("Selecione um canal."); return; }
+  if (!canalId) {
+    statusGerar.textContent = "⚠️ Selecione um canal primeiro.";
+    statusGerar.className = "status erro";
+    return;
+  }
+  
+  statusGerar.textContent = "⏳ Gerando novo título com IA...";
+  statusGerar.className = "status";
+  btnGerar.disabled = true;
+
   try {
-    const result = await gerarTitulo(canalId, true);
+    // Excluir o último rascunho
+    const q = query(
+      collection(db, "historico"),
+      where("canalId", "==", canalId),
+      where("status", "==", "rascunho"),
+      orderBy("criadoEm", "desc"),
+      limit(1)
+    );
+    const snap = await getDocs(q);
+    if (!snap.empty) await deleteDoc(snap.docs[0].ref);
+    
+    const result = await gerarTituloComIA(canalId, true);
     ultimoTituloGerado = result.titulo;
     ultimoArquetipo = result.arquétipo;
     inputTitulo.value = result.titulo;
-    document.getElementById("badge-arquetipo").textContent = result.arquétipo;
-    statusGerar.textContent = `🔄 Novo título (${result.arquétipo})`;
+    document.getElementById("badge-arquetipo").textContent = "GPT-4o";
+    statusGerar.textContent = `🔄 Novo título gerado: "${result.titulo}"`;
     statusGerar.className = "status sucesso";
   } catch (err) {
-    alert("Erro: " + err.message);
+    console.error(err);
+    statusGerar.textContent = `❌ ${err.message}`;
+    statusGerar.className = "status erro";
+  } finally {
+    btnGerar.disabled = false;
   }
 });
 
@@ -699,20 +684,22 @@ async function getTotalVideosCanal(canalId) {
   return snap.size;
 }
 
-// Gerar Prompt
+// ============================================================
+// GERAR PROMPT (COM TÍTULO JÁ GERADO)
+// ============================================================
 btnGerar.addEventListener("click", async () => {
   const titulo = inputTitulo.value.trim();
   const canalId = selectCanal.value;
   const minutos = parseFloat(document.getElementById("input-minutos").value);
   const ppm = parseFloat(document.getElementById("input-ppm").value) || PPM_PADRAO;
 
-  if (!titulo) { statusGerar.textContent = "Digite ou gere um título."; statusGerar.className = "status erro"; return; }
-  if (!canalId) { statusGerar.textContent = "Selecione um canal."; statusGerar.className = "status erro"; return; }
-  if (!minutos || minutos <= 0) { statusGerar.textContent = "Duração inválida."; statusGerar.className = "status erro"; return; }
-  if (!traducoes || !systemPrompts) { statusGerar.textContent = "Dados não carregados."; statusGerar.className = "status erro"; return; }
+  if (!titulo) { statusGerar.textContent = "⚠️ Gere ou digite um título primeiro."; statusGerar.className = "status erro"; return; }
+  if (!canalId) { statusGerar.textContent = "⚠️ Selecione um canal."; statusGerar.className = "status erro"; return; }
+  if (!minutos || minutos <= 0) { statusGerar.textContent = "⚠️ Duração inválida."; statusGerar.className = "status erro"; return; }
+  if (!traducoes || !systemPrompts) { statusGerar.textContent = "⚠️ Dados não carregados."; statusGerar.className = "status erro"; return; }
 
   btnGerar.disabled = true;
-  statusGerar.textContent = "Gerando...";
+  statusGerar.textContent = "⏳ Gerando prompt...";
   statusGerar.className = "status";
 
   try {
@@ -784,27 +771,27 @@ btnGerar.addEventListener("click", async () => {
     resultadoRevisao.value = revisao;
     cartaoRevisao.classList.remove("oculto");
 
-    await addDoc(collection(db, "historico"), {
-      canalId: canalId,
-      titulo,
-      criadoEm: serverTimestamp(),
-      minutos: params.minutos,
-      palavras_alvo: params.palavrasAlvo,
-      limite_anafora: params.limite_anafora,
-      distribuicao_blocos: params.distribuicao,
-      momento,
-      idioma,
-      arquetipos_usados: params.arquetipos_evitar.slice(0, 3),
-      casos_usados: params.casos_evitar.slice(0, 3),
-      arquetipo_usado: ultimoArquetipo || null,
-    });
+    // Atualizar status do título para "pronto"
+    if (ultimoTituloGerado) {
+      const qUpdate = query(
+        collection(db, "historico"),
+        where("canalId", "==", canalId),
+        where("titulo", "==", ultimoTituloGerado),
+        where("status", "==", "rascunho"),
+        limit(1)
+      );
+      const snapUpdate = await getDocs(qUpdate);
+      if (!snapUpdate.empty) {
+        await setDoc(snapUpdate.docs[0].ref, { status: "pronto" }, { merge: true });
+      }
+    }
 
-    statusGerar.textContent = "✅ Prompt gerado!";
+    statusGerar.textContent = "✅ Prompt gerado com sucesso!";
     statusGerar.className = "status sucesso";
     carregarHistorico(canalId, true);
   } catch (err) {
     console.error(err);
-    statusGerar.textContent = "Erro: " + err.message;
+    statusGerar.textContent = "❌ Erro ao gerar prompt: " + err.message;
     statusGerar.className = "status erro";
   } finally {
     btnGerar.disabled = false;
@@ -890,4 +877,4 @@ document.querySelectorAll(".aba").forEach((botao) => {
   });
 });
 
-console.log("✅ Faith Prompt Engine carregado!");
+console.log("✅ Faith Prompt Engine carregado (modo API)!");
