@@ -98,7 +98,6 @@ let canalSelecionadoId = null;
 let ultimoDocHistorico = null;
 let ultimoTituloGerado = "";
 let ultimoArquetipo = "";
-let criandoCanal = false; // trava contra duplo clique / duplo submit
 
 // ============================================================
 // REFERÊNCIAS DOS ELEMENTOS (Nova estrutura)
@@ -213,7 +212,7 @@ function mostrarDetalhe(canalId) {
   if (dashboard) dashboard.classList.add("oculto");
   if (detalhe) detalhe.classList.remove("oculto");
   if (btnVoltarDashboard) btnVoltarDashboard.classList.remove("oculto");
-
+  
   const canal = canais.find(c => c.id === canalId);
   if (canal && detalheNome) {
     detalheNome.textContent = canal.nome;
@@ -287,23 +286,23 @@ async function carregarCanais() {
 async function renderizarCanaisDashboard() {
   if (!listaCanaisDash) return;
   listaCanaisDash.innerHTML = "";
-
+  
   if (!canais.length) {
     listaCanaisDash.innerHTML = `<div class="empty-state">Nenhum canal criado ainda. Clique em "Criar canal" para começar.</div>`;
     return;
   }
-
+  
   for (const canal of canais) {
     const card = document.createElement("div");
     card.className = "card-canal";
     const momentoIcon = { manha_disposicao: "🌅", madrugada_ansiedade: "🌙", noite_sono: "🌙" }[canal.momento] || "📌";
     const momentoLabel = { manha_disposicao: "Manhã", madrugada_ansiedade: "Madrugada", noite_sono: "Noite" }[canal.momento] || canal.momento;
     const idiomaLabel = { "pt-BR": "🇧🇷 PT", "en-US": "🇺🇸 EN", "es-LA": "🇪🇸 ES", "fr": "🇫🇷 FR", "ko": "🇰🇷 KO" }[canal.idioma] || canal.idioma;
-
+    
     const q = query(collection(db, "historico"), where("canalId", "==", canal.id));
     const snap = await getDocs(q);
     const total = snap.size;
-
+    
     card.innerHTML = `
       <div class="nome">${momentoIcon} ${canal.nome}</div>
       <div class="meta">${momentoLabel} · ${idiomaLabel}</div>
@@ -311,7 +310,7 @@ async function renderizarCanaisDashboard() {
       <button class="btn btn-primary btn-sm btn-entrar" data-id="${canal.id}">Entrar</button>
     `;
     listaCanaisDash.appendChild(card);
-
+    
     card.querySelector(".btn-entrar").addEventListener("click", (e) => {
       e.stopPropagation();
       mostrarDetalhe(canal.id);
@@ -350,52 +349,25 @@ if (modalCanal) {
   });
 }
 
-// >>> CORREÇÃO DO BUG DE CANAL DUPLICADO <<<
-// Antes: o clique disparava addDoc sem travar o botão, então um duplo-clique
-// (ou um clique repetido enquanto a rede ainda respondia) criava dois
-// documentos no Firestore. Agora: trava por flag + botão desabilitado
-// durante o envio, e checagem de nome repetido antes de gravar.
 if (btnCriarCanal) {
   btnCriarCanal.addEventListener("click", async () => {
-    if (criandoCanal) return; // ignora cliques repetidos enquanto já está criando
-    if (!inputNomeCanal || !statusCanal) return;
-
+    if (!inputNomeCanal) return;
     const nome = inputNomeCanal.value.trim();
     const momento = selectMomentoCanal ? selectMomentoCanal.value : "madrugada_ansiedade";
     const idioma = selectIdiomaCanal ? selectIdiomaCanal.value : "pt-BR";
-
-    if (!nome) {
-      statusCanal.textContent = "Digite um nome.";
-      statusCanal.className = "status erro";
-      return;
-    }
-
-    const jaExiste = canais.some(c => (c.nome || "").trim().toLowerCase() === nome.toLowerCase());
-    if (jaExiste) {
-      statusCanal.textContent = "Já existe um canal com esse nome.";
-      statusCanal.className = "status erro";
-      return;
-    }
-
-    criandoCanal = true;
-    btnCriarCanal.disabled = true;
-    statusCanal.textContent = "Criando canal...";
-    statusCanal.className = "status";
-
+    if (!statusCanal) return;
+    if (!nome) { statusCanal.textContent = "Digite um nome."; statusCanal.className = "status erro"; return; }
     try {
       await addDoc(collection(db, "canais"), { nome, momento, idioma, criadoEm: serverTimestamp(), ativo: true });
       statusCanal.textContent = "✅ Canal criado!";
       statusCanal.className = "status sucesso";
-      inputNomeCanal.value = "";
+      if (inputNomeCanal) inputNomeCanal.value = "";
       if (modalCanal) modalCanal.classList.add("oculto");
       await carregarCanais();
       renderizarCanaisDashboard();
     } catch (err) {
       statusCanal.textContent = "Erro ao criar.";
       statusCanal.className = "status erro";
-    } finally {
-      criandoCanal = false;
-      btnCriarCanal.disabled = false;
     }
   });
 }
@@ -656,7 +628,7 @@ async function carregarHistorico(canalId = null, reiniciar = false) {
   if (reiniciar) { listaHistorico.innerHTML = ""; ultimoDocHistorico = null; }
   if (!canalId) { canalId = canalSelecionadoId; }
   if (!canalId) {
-    listaHistorico.innerHTML = '<p style="color: var(--ink-faint);">Selecione um canal.</p>';
+    listaHistorico.innerHTML = '<p style="color: var(--texto-fraco);">Selecione um canal.</p>';
     if (btnMais) btnMais.classList.add("oculto");
     return;
   }
@@ -669,7 +641,7 @@ async function carregarHistorico(canalId = null, reiniciar = false) {
     }
     const snap = await getDocs(q);
     if (reiniciar && snap.empty) {
-      listaHistorico.innerHTML = '<p style="color: var(--ink-faint);">Nenhum roteiro ainda.</p>';
+      listaHistorico.innerHTML = '<p style="color: var(--texto-fraco);">Nenhum roteiro ainda.</p>';
     }
     snap.docs.forEach((docSnap) => {
       const r = docSnap.data();
@@ -717,6 +689,7 @@ if (btnMaisHistorico) {
 // ============================================================
 // ABA INTERNA: GERAR PROMPT
 // ============================================================
+// Navegação entre abas internas
 document.querySelectorAll(".aba-interna").forEach((botao) => {
   botao.addEventListener("click", () => {
     document.querySelectorAll(".aba-interna").forEach((b) => b.classList.remove("ativa"));
@@ -728,6 +701,7 @@ document.querySelectorAll(".aba-interna").forEach((botao) => {
   });
 });
 
+// Gerar Título
 if (btnGerarTitulo) {
   btnGerarTitulo.addEventListener("click", async () => {
     if (!canalSelecionadoId) { alert("Selecione um canal."); return; }
@@ -763,6 +737,7 @@ if (btnRefazerTitulo) {
   });
 }
 
+// Gerar Prompt
 if (btnGerar) {
   btnGerar.addEventListener("click", async () => {
     const titulo = inputTitulo ? inputTitulo.value.trim() : "";
@@ -875,6 +850,7 @@ if (btnGerar) {
   });
 }
 
+// Copiar Prompt
 if (btnCopiar) {
   btnCopiar.addEventListener("click", async () => {
     if (!resultadoPrompt) return;
@@ -884,6 +860,7 @@ if (btnCopiar) {
   });
 }
 
+// Copiar Revisão
 if (btnCopiarRevisao) {
   btnCopiarRevisao.addEventListener("click", async () => {
     if (!resultadoRevisao) return;
