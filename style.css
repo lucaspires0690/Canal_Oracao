@@ -85,7 +85,6 @@ h2 {
 }
 
 /* ---------- LOGIN ---------- */
-
 .tela-login {
   position: relative;
   z-index: 1;
@@ -108,14 +107,6 @@ h2 {
 
 .login-card .subtitle { margin-bottom: 1.4rem; }
 
-#form-login { display: flex; flex-direction: column; gap: 6px; }
-
-#form-login label {
-  font-size: 0.8rem;
-  color: var(--texto-fraco);
-  margin-top: 10px;
-}
-
 .erro {
   color: var(--erro);
   font-size: 0.85rem;
@@ -124,7 +115,6 @@ h2 {
 }
 
 /* ---------- APP ---------- */
-
 .tela-app {
   position: relative;
   z-index: 1;
@@ -185,18 +175,14 @@ h2 {
   justify-content: space-between;
 }
 
-.cartao-importar {
-  border-style: dashed;
-}
-
 label {
   font-size: 0.85rem;
   color: var(--texto-fraco);
 }
 
 input[type="text"],
-input[type="email"],
-input[type="password"],
+input[type="number"],
+select,
 textarea {
   background: var(--bg-input);
   border: 1px solid var(--borda);
@@ -208,7 +194,24 @@ textarea {
   width: 100%;
 }
 
-input:focus, textarea:focus, button:focus-visible {
+select {
+  appearance: none;
+  cursor: pointer;
+}
+
+.linha-dupla {
+  display: flex;
+  gap: 12px;
+}
+
+.linha-dupla .campo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+input:focus, textarea:focus, select:focus, button:focus-visible {
   outline: 2px solid var(--ambar);
   outline-offset: 1px;
 }
@@ -290,45 +293,6 @@ button {
   margin-top: 8px;
 }
 
-/* listas editáveis (pools) */
-
-.lista-editavel {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.item-lista {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  background: var(--bg-input);
-  border: 1px solid var(--borda);
-  border-radius: 8px;
-  padding: 8px 10px 8px 14px;
-  font-size: 0.9rem;
-}
-
-.item-lista button {
-  background: none;
-  border: none;
-  color: var(--texto-fraco);
-  font-size: 0.85rem;
-  padding: 4px 8px;
-}
-
-.item-lista button:hover { color: var(--erro); }
-
-.linha-adicionar {
-  display: flex;
-  gap: 8px;
-}
-
-.linha-adicionar input { flex: 1; }
-
-/* histórico */
-
 .lista-historico {
   display: flex;
   flex-direction: column;
@@ -356,4 +320,5 @@ button {
 @media (max-width: 600px) {
   .tela-app { padding: 22px 14px 60px; }
   .login-card { padding: 28px 22px; }
+  .linha-dupla { flex-direction: column; }
 }
