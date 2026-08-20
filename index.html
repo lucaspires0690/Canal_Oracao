@@ -1,215 +1,859 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Faith Prompt Engine — Canais de Oração</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="style.css" />
-</head>
-<body>
+// ============================================================
+// CONFIGURAÇÃO DO FIREBASE
+// ============================================================
+const firebaseConfig = {
+  apiKey: "AIzaSyAo9tWzi30ts5y5cNxpwljzHk3pF44zth4",
+  authDomain: "roteiros-pre-historia.firebaseapp.com",
+  projectId: "roteiros-pre-historia",
+  storageBucket: "roteiros-pre-historia.firebasestorage.app",
+  messagingSenderId: "787703137955",
+  appId: "1:787703137955:web:aeb429b2b786da1ab86116",
+};
 
-<div class="app-wrapper">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
+import {
+  getAuth,
+  onAuthStateChanged,
+  GoogleAuthProvider,
+  signInWithPopup,
+  signOut,
+} from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
+import {
+  getFirestore,
+  doc,
+  getDoc,
+  setDoc,
+  collection,
+  addDoc,
+  query,
+  where,
+  orderBy,
+  limit,
+  startAfter,
+  getDocs,
+  serverTimestamp,
+  writeBatch,
+  deleteDoc,
+} from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
+import {
+  getStorage,
+  ref,
+  getDownloadURL,
+} from "https://www.gstatic.com/firebasejs/12.15.0/firebase-storage.js";
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const storage = getStorage(app);
+
+// ============================================================
+// CONSTANTES E URLs
+// ============================================================
+const JANELA_REPETICAO = 6;
+const QTD_ARQUETIPOS_SUGERIDOS = 6;
+const QTD_CASOS_SUGERIDOS = 6;
+const PPM_PADRAO = 150;
+const PAGINA_HISTORICO = 10;
+
+const GITHUB_BASE = "https://raw.githubusercontent.com/lucaspires0690/Canal_Oracao/main/";
+const URL_TRANSLATIONS = GITHUB_BASE + "translations.json";
+const URL_SYSTEM_PROMPTS = GITHUB_BASE + "system_prompts.json";
+const URL_VALIDATED_RULES = GITHUB_BASE + "validated_rules.json";
+const URL_RAW_TITLES = GITHUB_BASE + "raw_titles.json";
+
+const BIBLE_MAP = {
+  "pt-BR": "nvi.json",
+  "en-US": "niv.json",
+  "es-LA": "nvi_es.json",
+  "fr": "lsg.json",
+  "ko": "krv.json"
+};
+
+// ---------- BANCOS PARA GERADOR DE TÍTULOS ----------
+const ARQUETIPOS = [
+  { id: "comando", peso: 30, label: "Comando" },
+  { id: "pergunta", peso: 25, label: "Pergunta" },
+  { id: "declaracao", peso: 25, label: "Declaração" },
+  { id: "curiosidade", peso: 20, label: "Curiosidade" }
+];
+const COMANDOS = ["Ore", "Diga", "Ouça", "Comece", "Faça", "Entregue", "Clame"];
+const DORES = {
+  "manha_disposicao": ["novo dia", "disposição", "propósito", "fé", "renovação", "gratidão"],
+  "madrugada_ansiedade": ["ansiedade", "medo", "preocupação", "insônia", "coração acelerado", "angústia", "desespero"],
+  "noite_sono": ["insônia", "preocupação", "cansaço", "dormir", "descanso", "paz"]
+};
+const PROMESSAS = ["paz", "proteção", "descanso", "força", "esperança", "alívio", "cura"];
+const TEMAS_CURIOSIDADE = ["Sinais", "Sintomas", "Hábitos", "Motivos", "Atitudes", "Erros"];
+
+// ============================================================
+// ESTADO GLOBAL
+// ============================================================
+let traducoes = null;
+let systemPrompts = null;
+let validatedRules = null;
+let rawTitles = null;
+let biblia = null;
+let canais = [];
+let canalSelecionadoId = null;
+let ultimoDocHistorico = null;
+let ultimoTituloGerado = "";
+let ultimoArquetipo = "";
+
+// ============================================================
+// PERSISTÊNCIA LOCAL (PPM)
+// ============================================================
+const inputPpm = document.getElementById("input-ppm");
+const ppmSalvo = localStorage.getItem("storyengine_ppm");
+if (ppmSalvo) inputPpm.value = ppmSalvo;
+inputPpm.addEventListener("change", () => {
+  const valor = parseFloat(inputPpm.value);
+  if (valor > 0) localStorage.setItem("storyengine_ppm", String(valor));
+});
+
+// ============================================================
+// AUTENTICAÇÃO
+// ============================================================
+const EMAIL_PERMITIDO = "lucasserip1990@gmail.com";
+
+const telaLogin = document.getElementById("tela-login");
+const telaApp = document.getElementById("tela-app");
+const btnGoogleLogin = document.getElementById("btn-google-login");
+const loginErro = document.getElementById("login-erro");
+const btnLogout = document.getElementById("btn-logout");
+const btnVoltar = document.getElementById("btn-voltar-dashboard");
+
+btnGoogleLogin.addEventListener("click", async () => {
+  loginErro.textContent = "";
+  try { await signInWithPopup(auth, new GoogleAuthProvider()); }
+  catch (err) { loginErro.textContent = "Erro ao entrar. Tente novamente."; }
+});
+
+btnLogout.addEventListener("click", () => signOut(auth));
+
+onAuthStateChanged(auth, async (user) => {
+  if (user && user.email === EMAIL_PERMITIDO) {
+    telaLogin.classList.add("oculto");
+    telaApp.classList.remove("oculto");
+    await carregarDados(user);
+    await carregarCanais();
+    mostrarDashboard();
+  } else if (user) {
+    loginErro.textContent = `E-mail ${user.email} não autorizado.`;
+    await signOut(auth);
+  } else {
+    telaApp.classList.add("oculto");
+    telaLogin.classList.remove("oculto");
+  }
+});
+
+// ============================================================
+// NAVEGAÇÃO ENTRE TELAS
+// ============================================================
+function mostrarDashboard() {
+  document.getElementById("tela-dashboard").classList.remove("oculto");
+  document.getElementById("tela-detalhe").classList.add("oculto");
+  btnVoltar.classList.add("oculto");
+  renderizarCanaisDashboard();
+}
+
+function mostrarDetalhe(canalId) {
+  canalSelecionadoId = canalId;
+  document.getElementById("tela-dashboard").classList.add("oculto");
+  document.getElementById("tela-detalhe").classList.remove("oculto");
+  btnVoltar.classList.remove("oculto");
   
-  <!-- ============================================================ -->
-  <!-- TELA DE LOGIN -->
-  <!-- ============================================================ -->
-  <section id="tela-login" class="tela-login">
-    <div class="login-card">
-      <div class="login-brand">
-        <span class="badge">Faith Prompt Engine</span>
-        <h1>Canais de Oração</h1>
-        <p>Acesse com sua conta Google autorizada.</p>
-      </div>
-      <button id="btn-google-login" class="btn btn-primary btn-google">
-        <svg width="20" height="20" viewBox="0 0 18 18" aria-hidden="true">
-          <path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84c-.21 1.13-.85 2.09-1.81 2.73v2.27h2.92c1.71-1.57 2.69-3.88 2.69-6.64z"/>
-          <path fill="#34A853" d="M9 18c2.43 0 4.47-.81 5.96-2.18l-2.92-2.27c-.81.55-1.84.87-3.04.87-2.34 0-4.32-1.58-5.03-3.71H.96v2.33C2.44 15.98 5.48 18 9 18z"/>
-          <path fill="#FBBC05" d="M3.97 10.71c-.18-.55-.28-1.13-.28-1.71s.1-1.16.28-1.71V4.96H.96A8.997 8.997 0 0 0 0 9c0 1.45.35 2.83.96 4.04l3.01-2.33z"/>
-          <path fill="#EA4335" d="M9 3.58c1.32 0 2.5.45 3.44 1.35l2.58-2.58C13.46.89 11.43 0 9 0 5.48 0 2.44 2.02.96 4.96l3.01 2.33C4.68 5.16 6.66 3.58 9 3.58z"/>
-        </svg>
-        Entrar com Google
-      </button>
-      <p class="erro" id="login-erro"></p>
-    </div>
-  </section>
+  const canal = canais.find(c => c.id === canalId);
+  if (canal) {
+    document.getElementById("detalhe-nome").textContent = canal.nome;
+    const momentoLabel = { manha_disposicao: "🌅 Manhã", madrugada_ansiedade: "🌙 Madrugada", noite_sono: "🌙 Noite" }[canal.momento] || canal.momento;
+    const idiomaLabel = { "pt-BR": "🇧🇷 Português", "en-US": "🇺🇸 Inglês", "es-LA": "🇪🇸 Espanhol", "fr": "🇫🇷 Francês", "ko": "🇰🇷 Coreano" }[canal.idioma] || canal.idioma;
+    document.getElementById("detalhe-meta").textContent = `${momentoLabel} · ${idiomaLabel}`;
+    document.getElementById("detalhe-badge").textContent = canal.momento.replace("_", " ").toUpperCase();
+    carregarHistorico(canalId, true);
+    atualizarContadorVideos(canalId);
+  }
+}
 
-  <!-- ============================================================ -->
-  <!-- APP PRINCIPAL -->
-  <!-- ============================================================ -->
-  <section id="tela-app" class="tela-app oculto">
+btnVoltar.addEventListener("click", () => {
+  mostrarDashboard();
+});
+
+// ============================================================
+// CARREGAR DADOS DO GITHUB E STORAGE
+// ============================================================
+async function carregarDados(user) {
+  try {
+    const [trad, prompts, rules, titles] = await Promise.all([
+      fetch(URL_TRANSLATIONS).then(r => r.json()),
+      fetch(URL_SYSTEM_PROMPTS).then(r => r.json()),
+      fetch(URL_VALIDATED_RULES).then(r => r.json()),
+      fetch(URL_RAW_TITLES).then(r => r.json())
+    ]);
+    traducoes = trad;
+    systemPrompts = prompts;
+    validatedRules = rules;
+    rawTitles = titles;
+    console.log("✅ Dados carregados do GitHub");
+    if (user) await carregarBibliaDoStorage("pt-BR");
+  } catch (err) {
+    console.error("❌ Erro ao carregar dados:", err);
+    const status = document.getElementById("status-gerar");
+    if (status) { status.textContent = "Erro ao carregar dados. Recarregue."; status.className = "status erro"; }
+  }
+}
+
+async function carregarBibliaDoStorage(idioma) {
+  try {
+    const fileName = BIBLE_MAP[idioma] || "nvi.json";
+    const bibleRef = ref(storage, `bible_data/${fileName}`);
+    const url = await getDownloadURL(bibleRef);
+    const response = await fetch(url);
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    biblia = await response.json();
+    console.log(`✅ Bíblia carregada (${fileName})`);
+    return true;
+  } catch (err) {
+    console.error("❌ Erro na Bíblia:", err);
+    biblia = null;
+    return false;
+  }
+}
+
+// ============================================================
+// CANAIS — DASHBOARD
+// ============================================================
+async function carregarCanais() {
+  try {
+    const q = query(collection(db, "canais"), orderBy("nome", "asc"));
+    const snap = await getDocs(q);
+    canais = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderizarCanaisDashboard();
+  } catch (err) { console.error("Erro ao carregar canais:", err); }
+}
+
+async function renderizarCanaisDashboard() {
+  const container = document.getElementById("lista-canais-dash");
+  container.innerHTML = "";
+  
+  if (!canais.length) {
+    container.innerHTML = `<div class="empty-state">Nenhum canal criado ainda. Clique em "Criar canal" para começar.</div>`;
+    return;
+  }
+  
+  for (const canal of canais) {
+    const card = document.createElement("div");
+    card.className = "card-canal";
+    const momentoIcon = { manha_disposicao: "🌅", madrugada_ansiedade: "🌙", noite_sono: "🌙" }[canal.momento] || "📌";
+    const momentoLabel = { manha_disposicao: "Manhã", madrugada_ansiedade: "Madrugada", noite_sono: "Noite" }[canal.momento] || canal.momento;
+    const idiomaLabel = { "pt-BR": "🇧🇷 PT", "en-US": "🇺🇸 EN", "es-LA": "🇪🇸 ES", "fr": "🇫🇷 FR", "ko": "🇰🇷 KO" }[canal.idioma] || canal.idioma;
     
-    <!-- TOPO -->
-    <header class="topo">
-      <div class="topo-info">
-        <span class="badge">Faith Prompt Engine</span>
-        <h1>Canais de Oração</h1>
-      </div>
-      <div class="topo-acoes">
-        <button id="btn-voltar-dashboard" class="btn btn-ghost btn-sm oculto" style="margin-right: 8px;">← Voltar</button>
-        <button id="btn-logout" class="btn btn-ghost btn-sm">Sair</button>
-      </div>
-    </header>
+    // Contar vídeos do canal
+    const q = query(collection(db, "historico"), where("canalId", "==", canal.id));
+    const snap = await getDocs(q);
+    const total = snap.size;
+    
+    card.innerHTML = `
+      <div class="nome">${momentoIcon} ${canal.nome}</div>
+      <div class="meta">${momentoLabel} · ${idiomaLabel}</div>
+      <div class="stats">${total} vídeo${total !== 1 ? 's' : ''}</div>
+      <button class="btn btn-primary btn-sm btn-entrar" data-id="${canal.id}">Entrar</button>
+    `;
+    container.appendChild(card);
+    
+    card.querySelector(".btn-entrar").addEventListener("click", (e) => {
+      e.stopPropagation();
+      mostrarDetalhe(canal.id);
+    });
+    card.addEventListener("click", () => {
+      mostrarDetalhe(canal.id);
+    });
+  }
+}
 
-    <!-- ============================================================ -->
-    <!-- TELA 1: DASHBOARD (Lista de canais) -->
-    <!-- ============================================================ -->
-    <section id="tela-dashboard" class="tela-dashboard">
-      <div class="dashboard-header">
-        <h2>📂 Meus Canais</h2>
-        <button id="btn-criar-canal-dash" class="btn btn-primary btn-sm">➕ Criar canal</button>
-      </div>
-      <div id="lista-canais-dash" class="grid-canais">
-        <!-- Os canais serão renderizados aqui via JavaScript -->
-        <div class="empty-state">Nenhum canal criado ainda. Clique em "Criar canal" para começar.</div>
-      </div>
-    </section>
+async function atualizarContadorVideos(canalId) {
+  const q = query(collection(db, "historico"), where("canalId", "==", canalId));
+  const snap = await getDocs(q);
+  document.getElementById("detalhe-total").textContent = `${snap.size} vídeo${snap.size !== 1 ? 's' : ''}`;
+}
 
-    <!-- ============================================================ -->
-    <!-- TELA 2: DETALHE DO CANAL (Gerar + Histórico) -->
-    <!-- ============================================================ -->
-    <section id="tela-detalhe" class="tela-detalhe oculto">
-      
-      <!-- Cabeçalho do canal -->
-      <div class="detalhe-header">
+// ============================================================
+// MODAL — CRIAR CANAL
+// ============================================================
+const modal = document.getElementById("modal-canal");
+
+document.getElementById("btn-criar-canal-dash").addEventListener("click", () => {
+  modal.classList.remove("oculto");
+});
+
+document.getElementById("btn-fechar-modal").addEventListener("click", () => {
+  modal.classList.add("oculto");
+});
+
+modal.addEventListener("click", (e) => {
+  if (e.target === modal) modal.classList.add("oculto");
+});
+
+document.getElementById("btn-criar-canal").addEventListener("click", async () => {
+  const nome = document.getElementById("input-nome-canal").value.trim();
+  const momento = document.getElementById("select-momento-canal").value;
+  const idioma = document.getElementById("select-idioma-canal").value;
+  const status = document.getElementById("status-canal");
+  if (!nome) { status.textContent = "Digite um nome."; status.className = "status erro"; return; }
+  try {
+    await addDoc(collection(db, "canais"), { nome, momento, idioma, criadoEm: serverTimestamp(), ativo: true });
+    status.textContent = "✅ Canal criado!";
+    status.className = "status sucesso";
+    document.getElementById("input-nome-canal").value = "";
+    modal.classList.add("oculto");
+    await carregarCanais();
+    renderizarCanaisDashboard();
+  } catch (err) {
+    status.textContent = "Erro ao criar.";
+    status.className = "status erro";
+  }
+});
+
+// ============================================================
+// GERADOR DE TÍTULOS
+// ============================================================
+function escolherArquetipo(historicoRecente) {
+  const contagem = { comando: 0, pergunta: 0, declaracao: 0, curiosidade: 0 };
+  const ultimos5 = historicoRecente.slice(0, 5);
+  for (const item of ultimos5) {
+    if (item.arquetipo_usado) contagem[item.arquetipo_usado] = (contagem[item.arquetipo_usado] || 0) + 1;
+  }
+  const disponiveis = ARQUETIPOS.filter(a => contagem[a.id] < 2);
+  if (disponiveis.length === 0) {
+    const totalPeso = ARQUETIPOS.reduce((s, a) => s + a.peso, 0);
+    let rand = Math.random() * totalPeso;
+    for (const a of ARQUETIPOS) {
+      rand -= a.peso;
+      if (rand <= 0) return a.id;
+    }
+  }
+  return disponiveis[Math.floor(Math.random() * disponiveis.length)].id;
+}
+
+function capitalize(str) {
+  return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+async function gerarTitulo(canalId, forcarNovo = false) {
+  try {
+    const canalDoc = await getDoc(doc(db, "canais", canalId));
+    if (!canalDoc.exists()) throw new Error("Canal não encontrado.");
+    const canal = canalDoc.data();
+
+    const q = query(collection(db, "historico"), where("canalId", "==", canalId), orderBy("criadoEm", "desc"), limit(10));
+    const snap = await getDocs(q);
+    const historicoRecente = snap.docs.map(d => d.data());
+
+    let arquétipo = escolherArquetipo(historicoRecente);
+    if (forcarNovo) {
+      const outros = ARQUETIPOS.filter(a => a.id !== arquétipo);
+      arquétipo = outros[Math.floor(Math.random() * outros.length)].id;
+    }
+
+    const doresDoMomento = DORES[canal.momento] || DORES["madrugada_ansiedade"];
+    const dor = doresDoMomento[Math.floor(Math.random() * doresDoMomento.length)];
+    const promessa = PROMESSAS[Math.floor(Math.random() * PROMESSAS.length)];
+    const comando = COMANDOS[Math.floor(Math.random() * COMANDOS.length)];
+    const temaCuriosidade = TEMAS_CURIOSIDADE[Math.floor(Math.random() * TEMAS_CURIOSIDADE.length)];
+
+    let titulo = "";
+    switch (arquétipo) {
+      case "comando":
+        titulo = `${comando} Isso Quando ${capitalize(dor)} e Encontre ${capitalize(promessa)}`;
+        break;
+      case "pergunta":
+        const perguntas = [
+          `${capitalize(dor)}? ${capitalize(comando)} Esta Oração e ${capitalize(promessa)}`,
+          `Está com ${capitalize(dor)}? ${capitalize(comando)} Isso Agora`
+        ];
+        titulo = perguntas[Math.floor(Math.random() * perguntas.length)];
+        break;
+      case "declaracao":
+        titulo = `Que a ${capitalize(promessa)} de Deus Esteja Sobre Você Hoje`;
+        break;
+      case "curiosidade":
+        const numeros = ["3", "5", "7", "10"];
+        titulo = `${numeros[Math.floor(Math.random() * numeros.length)]} ${temaCuriosidade} de que Deus Está ${capitalize(promessa)} Você`;
+        break;
+      default:
+        titulo = `${comando} Isso Quando ${capitalize(dor)} e Encontre ${capitalize(promessa)}`;
+    }
+
+    return { titulo, arquétipo };
+  } catch (err) {
+    console.error("Erro ao gerar título:", err);
+    throw err;
+  }
+}
+
+// ============================================================
+// MOTOR DE GERAÇÃO DE PROMPT
+// ============================================================
+function calcularParametrosDeDuracao(minutos, ppm) {
+  const palavrasAlvo = Math.round(minutos * ppm);
+  const palavrasMin = Math.round(palavrasAlvo * 0.9);
+  const palavrasMax = Math.round(palavrasAlvo * 1.1);
+  const perguntasMin = Math.max(4, Math.round(palavrasAlvo / 300));
+  const humorMin = Math.max(2, Math.round(palavrasAlvo / 700));
+  return { minutos, ppm, palavrasAlvo, palavrasMin, palavrasMax, perguntasMin, humorMin };
+}
+
+function gerarDistribuicaoBlocos() {
+  const base = { B1: 10, B2: 12, B3: 33, B4: 10, B5: 11, B6: 12, B7: 12 };
+  const variado = {};
+  for (const bloco in base) {
+    const pct = base[bloco];
+    const margem = pct * 0.15;
+    variado[bloco] = pct + (Math.random() * 2 - 1) * margem;
+  }
+  const soma = Object.values(variado).reduce((a, b) => a + b, 0);
+  const fator = 100 / soma;
+  for (const bloco in variado) {
+    variado[bloco] = Math.round(variado[bloco] * fator * 10) / 10;
+  }
+  return variado;
+}
+
+function calcularPalavrasPorBloco(distribuicaoPct, palavrasAlvo) {
+  const resultado = {};
+  for (const bloco in distribuicaoPct) {
+    resultado[bloco] = Math.round((palavrasAlvo * distribuicaoPct[bloco]) / 100);
+  }
+  return resultado;
+}
+
+function buscarVersiculo(referencia, biblia) {
+  if (!biblia) return null;
+  const padrao = /^([a-zA-ZÀ-ú]+)\s+(\d+):(\d+)(?:-(\d+))?$/;
+  const match = padrao.exec(referencia.trim());
+  if (!match) return null;
+  const [_, livroNome, capituloStr, versiculoStr, versiculoFimStr] = match;
+  const capitulo = parseInt(capituloStr);
+  const versiculo = parseInt(versiculoStr);
+  const livro = biblia.find(l => l.name.toLowerCase() === livroNome.toLowerCase());
+  if (!livro) return null;
+  if (capitulo > livro.chapters.length) return null;
+  if (versiculoFimStr) {
+    const versiculoFim = parseInt(versiculoFimStr);
+    return livro.chapters[capitulo - 1].slice(versiculo - 1, versiculoFim).join(" ");
+  } else {
+    return livro.chapters[capitulo - 1][versiculo - 1] || null;
+  }
+}
+
+function montarMensagemRevisao(params, langData) {
+  const base = langData?.instructions?.revision_message || "Revise o roteiro que você acabou de escrever para este vídeo";
+  return `${base}:
+
+1. Contagem de palavras: confira se o roteiro tem entre ${params.palavrasMin} e ${params.palavrasMax} palavras.
+2. Parágrafos: nenhum parágrafo pode ter mais de 3 frases.
+3. Humor/consolo: confirme se existem pelo menos ${params.humorMin} momentos de consolo distribuídos.
+4. Versículos: confirme que os versículos sugeridos estão corretos (use {{VERSICULO}} como marcador).
+5. Tom: o tom deve ser acolhedor, compassivo e nunca de acusação ou medo.
+
+Entregue apenas o roteiro corrigido e completo. Sem comentários sobre o que foi revisado.`;
+}
+
+function montarPrompt(params, langData, templateBlocos) {
+  const inst = langData?.instructions || {};
+  let texto = "";
+
+  texto += (inst.system_prompt || "") + "\n\n";
+  texto += (inst.channel_identity || "") + "\n\n";
+  texto += (inst.focus || "") + "\n\n";
+  texto += (inst.narrative_objective || "") + "\n\n";
+  texto += (inst.title_placeholder || "🎬 TÍTULO DESTE VÍDEO\n\n\"<<TITULO>>\"").replace("<<TITULO>>", params.titulo) + "\n\n";
+  texto += (inst.analysis_step || "") + "\n\n";
+  texto += (inst.word_count || "") + "\n\n";
+  texto += (inst.structural_variation || "") + "\n\n";
+
+  texto += "🧱 ESTRUTURA NARRATIVA — 7 BLOCOS (obrigatória)\n\n";
+  if (templateBlocos) {
+    const blocos = templateBlocos.split("\n");
+    for (const bloco of blocos) {
+      if (bloco.trim()) texto += bloco + "\n";
+    }
+  }
+  texto += "\n" + (inst.forbidden_absolutes || "") + "\n\n";
+  texto += (inst.tts_format || "") + "\n\n";
+
+  texto += `✅ VERIFICAÇÃO PROGRESSIVA DE PALAVRAS
+
+Cada bloco tem um alvo de palavras. Ao terminar de escrever cada bloco, estime quantas palavras esse bloco tem.
+
+Antes de entregar a resposta final, confirme que o texto final realmente contém:
+- Pelo menos ${params.perguntasMin} perguntas retóricas
+- Pelo menos ${params.humorMin} momentos de consolo/declarações de paz
+- Pelo menos 2 versículos bíblicos (via {{VERSICULO}})
+- Nenhum parágrafo com mais de 3 frases
+- Tom acolhedor e compassivo
+
+Se o total geral passar de ${params.palavrasMax} palavras, corte o excesso sem perder as regras obrigatórias.
+`;
+
+  texto += "\n" + (inst.final_output || "📤 SAÍDA FINAL\n\nExecute todas as regras acima e entregue apenas o roteiro final.\n\nAgora, escreva o roteiro para o título: <<TITULO>>").replace("<<TITULO>>", params.titulo);
+
+  const substitutos = {
+    "<<MINUTOS>>": String(params.minutos),
+    "<<PPM>>": String(params.ppm),
+    "<<PALAVRAS_ALVO>>": String(params.palavrasAlvo),
+    "<<PALAVRAS_MIN>>": String(params.palavrasMin),
+    "<<PALAVRAS_MAX>>": String(params.palavrasMax),
+    "<<PERGUNTAS_MIN>>": String(params.perguntasMin),
+    "<<HUMOR_MIN>>": String(params.humorMin),
+    "<<LIMITE_ANAFORA>>": String(params.limite_anafora),
+    "<<B1>>": String(params.distribuicao.B1),
+    "<<B2>>": String(params.distribuicao.B2),
+    "<<B3>>": String(params.distribuicao.B3),
+    "<<B4>>": String(params.distribuicao.B4),
+    "<<B5>>": String(params.distribuicao.B5),
+    "<<B6>>": String(params.distribuicao.B6),
+    "<<B7>>": String(params.distribuicao.B7),
+    "<<PALAVRAS_B1>>": String(params.palavrasPorBloco.B1),
+    "<<PALAVRAS_B2>>": String(params.palavrasPorBloco.B2),
+    "<<PALAVRAS_B3>>": String(params.palavrasPorBloco.B3),
+    "<<PALAVRAS_B4>>": String(params.palavrasPorBloco.B4),
+    "<<PALAVRAS_B5>>": String(params.palavrasPorBloco.B5),
+    "<<PALAVRAS_B6>>": String(params.palavrasPorBloco.B6),
+    "<<PALAVRAS_B7>>": String(params.palavrasPorBloco.B7),
+    "<<ARQUETIPOS_EVITAR>>": (params.arquetipos_evitar || []).map(a => `- ${a}`).join("\n"),
+    "<<CASOS_EVITAR>>": (params.casos_evitar || []).map(c => `- ${c}`).join("\n"),
+  };
+  for (const [chave, valor] of Object.entries(substitutos)) {
+    texto = texto.replaceAll(chave, valor);
+  }
+
+  return texto;
+}
+
+function itensUsadosRecentemente(historicoRecente, campo) {
+  const usados = new Set();
+  historicoRecente.forEach((r) => (r[campo] || []).forEach((item) => usados.add(item)));
+  return usados;
+}
+
+function escolherNumeroSemRepetir(opcoes, historicoRecente, campo) {
+  const recentes = historicoRecente.map((r) => r[campo]);
+  let candidatos = opcoes.filter((o) => !recentes.includes(o));
+  if (candidatos.length === 0) candidatos = [...opcoes];
+  return candidatos[Math.floor(Math.random() * candidatos.length)];
+}
+
+function shuffle(array) {
+  const a = [...array];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function escolherListaSemRepetir(pool, usadosRecentes, quantidade) {
+  let disponiveis = pool.filter((item) => !usadosRecentes.has(item));
+  if (disponiveis.length < quantidade) {
+    disponiveis = [...pool];
+  }
+  return shuffle(disponiveis).slice(0, quantidade);
+}
+
+// ============================================================
+// HISTÓRICO POR CANAL
+// ============================================================
+async function carregarHistorico(canalId = null, reiniciar = false) {
+  const lista = document.getElementById("lista-historico");
+  const btnMais = document.getElementById("btn-mais-historico");
+  if (reiniciar) { lista.innerHTML = ""; ultimoDocHistorico = null; }
+  if (!canalId) { canalId = canalSelecionadoId; }
+  if (!canalId) {
+    lista.innerHTML = '<p style="color: var(--texto-fraco);">Selecione um canal.</p>';
+    btnMais.classList.add("oculto");
+    return;
+  }
+  try {
+    let q;
+    if (ultimoDocHistorico) {
+      q = query(collection(db, "historico"), where("canalId", "==", canalId), orderBy("criadoEm", "desc"), startAfter(ultimoDocHistorico), limit(PAGINA_HISTORICO));
+    } else {
+      q = query(collection(db, "historico"), where("canalId", "==", canalId), orderBy("criadoEm", "desc"), limit(PAGINA_HISTORICO));
+    }
+    const snap = await getDocs(q);
+    if (reiniciar && snap.empty) {
+      lista.innerHTML = '<p style="color: var(--texto-fraco);">Nenhum roteiro ainda.</p>';
+    }
+    snap.docs.forEach((docSnap) => {
+      const r = docSnap.data();
+      const item = document.createElement("div");
+      item.className = "item-historico";
+      const dataFormatada = r.criadoEm?.toDate?.()?.toLocaleString?.("pt-BR") || "—";
+      const momentoLabel = r.momento || "—";
+      const idiomaLabel = r.idioma || "—";
+      const duracaoTexto = r.minutos ? `${r.minutos} min (${r.palavras_alvo || "?"} palavras) · ` : "";
+      item.innerHTML = `
         <div>
-          <span class="badge" id="detalhe-badge">Canal</span>
-          <h2 id="detalhe-nome">Nome do Canal</h2>
-          <p class="detalhe-meta" id="detalhe-meta">🌅 Manhã · 🇧🇷 Português</p>
+          <div class="item-titulo">${escaparHtml(r.titulo || "(sem título)")}</div>
+          <div class="item-meta">${dataFormatada} · ${duracaoTexto}${momentoLabel} · ${idiomaLabel} · anáfora ${r.limite_anafora ?? "—"} · arquétipos: ${escaparHtml((r.arquetipos_usados || []).join(", "))}</div>
         </div>
-        <div class="detalhe-stats">
-          <span id="detalhe-total">0 vídeos</span>
-        </div>
-      </div>
+      `;
+      lista.appendChild(item);
+    });
+    if (snap.docs.length > 0) {
+      ultimoDocHistorico = snap.docs[snap.docs.length - 1];
+    }
+    btnMais.classList.toggle("oculto", snap.docs.length < PAGINA_HISTORICO);
+  } catch (err) {
+    console.error("Erro ao carregar histórico:", err);
+  }
+}
 
-      <!-- Abas internas do canal -->
-      <nav class="nav-aba-interna">
-        <button class="aba-interna ativa" data-aba="gerar">🎯 Gerar</button>
-        <button class="aba-interna" data-aba="historico">📜 Histórico</button>
-      </nav>
+function escaparHtml(texto) {
+  const div = document.createElement("div");
+  div.textContent = texto;
+  return div.innerHTML;
+}
 
-      <!-- ============================================================ -->
-      <!-- ABA INTERNA: GERAR -->
-      <!-- ============================================================ -->
-      <div class="painel-interno ativo" data-painel="gerar">
-        
-        <div class="grid-2">
-          <div class="cartao">
-            <label for="input-titulo">📝 Título do vídeo</label>
-            <div class="input-group">
-              <input type="text" id="input-titulo" placeholder="Digite ou gere um título..." />
-              <button id="btn-gerar-titulo" class="btn btn-secundario btn-sm" title="Gerar título com IA">✨</button>
-              <button id="btn-refazer-titulo" class="btn btn-secundario btn-sm" title="Refazer título">🔄</button>
-            </div>
-            <div class="titulo-status">
-              <span class="badge-status" id="badge-arquetipo">—</span>
-              <span id="video-counter">Vídeo #0</span>
-            </div>
-          </div>
+document.getElementById("btn-recarregar-historico").addEventListener("click", () => {
+  carregarHistorico(canalSelecionadoId, true);
+});
 
-          <div class="cartao">
-            <label for="input-minutos">⏱️ Duração (min)</label>
-            <input type="number" id="input-minutos" min="1" step="0.5" value="10" />
-          </div>
-        </div>
+document.getElementById("btn-mais-historico").addEventListener("click", () => {
+  carregarHistorico(canalSelecionadoId, false);
+});
 
-        <div class="grid-2">
-          <div class="cartao">
-            <label for="input-ppm">🔊 Palavras/min (TTS)</label>
-            <input type="number" id="input-ppm" min="50" step="5" value="150" />
-          </div>
-          <div class="cartao" style="display: flex; flex-direction: column; justify-content: flex-end;">
-            <p style="color: var(--texto-fraco); font-size: 0.85rem; margin: 0;">
-              💡 Ajuste conforme a velocidade do seu TTS.
-            </p>
-          </div>
-        </div>
+// ============================================================
+// ABA INTERNA: GERAR PROMPT
+// ============================================================
+const inputTitulo = document.getElementById("input-titulo");
+const btnGerar = document.getElementById("btn-gerar");
+const statusGerar = document.getElementById("status-gerar");
+const cartaoResultado = document.getElementById("cartao-resultado");
+const resultadoPrompt = document.getElementById("resultado-prompt");
+const parametrosDetalhe = document.getElementById("parametros-detalhe");
+const btnCopiar = document.getElementById("btn-copiar");
+const cartaoRevisao = document.getElementById("cartao-revisao");
+const resultadoRevisao = document.getElementById("resultado-revisao");
+const btnCopiarRevisao = document.getElementById("btn-copiar-revisao");
 
-        <button id="btn-gerar" class="btn btn-primary btn-lg">🚀 Gerar Prompt</button>
-        <p class="status" id="status-gerar"></p>
+// Navegação entre abas internas
+document.querySelectorAll(".aba-interna").forEach((botao) => {
+  botao.addEventListener("click", () => {
+    document.querySelectorAll(".aba-interna").forEach((b) => b.classList.remove("ativa"));
+    botao.classList.add("ativa");
+    const alvo = botao.dataset.aba;
+    document.querySelectorAll(".painel-interno").forEach((p) => {
+      p.classList.toggle("ativo", p.dataset.painel === alvo);
+    });
+  });
+});
 
-        <div class="cartao oculto" id="cartao-resultado" style="flex: 1; min-height: 200px;">
-          <div class="cartao-header">
-            <h2>📋 Prompt pronto</h2>
-            <button id="btn-copiar" class="btn btn-ghost btn-sm">📄 Copiar</button>
-          </div>
-          <textarea id="resultado-prompt" readonly spellcheck="false" style="flex: 1; min-height: 180px;"></textarea>
-          <details>
-            <summary>📊 Parâmetros sorteados</summary>
-            <pre id="parametros-detalhe"></pre>
-          </details>
-        </div>
+// Gerar Título
+document.getElementById("btn-gerar-titulo").addEventListener("click", async () => {
+  if (!canalSelecionadoId) { alert("Selecione um canal."); return; }
+  try {
+    const result = await gerarTitulo(canalSelecionadoId, false);
+    ultimoTituloGerado = result.titulo;
+    ultimoArquetipo = result.arquétipo;
+    inputTitulo.value = result.titulo;
+    document.getElementById("badge-arquetipo").textContent = result.arquétipo;
+    const q = query(collection(db, "historico"), where("canalId", "==", canalSelecionadoId));
+    const snap = await getDocs(q);
+    document.getElementById("video-counter").textContent = `Vídeo #${snap.size + 1}`;
+    statusGerar.textContent = `✅ Título gerado (${result.arquétipo})`;
+    statusGerar.className = "status sucesso";
+  } catch (err) {
+    alert("Erro: " + err.message);
+  }
+});
 
-        <div class="cartao oculto" id="cartao-revisao">
-          <div class="cartao-header">
-            <h2>🔁 Mensagem de revisão</h2>
-            <button id="btn-copiar-revisao" class="btn btn-ghost btn-sm">📄 Copiar</button>
-          </div>
-          <textarea id="resultado-revisao" readonly spellcheck="false"></textarea>
-        </div>
+document.getElementById("btn-refazer-titulo").addEventListener("click", async () => {
+  if (!canalSelecionadoId) { alert("Selecione um canal."); return; }
+  try {
+    const result = await gerarTitulo(canalSelecionadoId, true);
+    ultimoTituloGerado = result.titulo;
+    ultimoArquetipo = result.arquétipo;
+    inputTitulo.value = result.titulo;
+    document.getElementById("badge-arquetipo").textContent = result.arquétipo;
+    statusGerar.textContent = `🔄 Novo título (${result.arquétipo})`;
+    statusGerar.className = "status sucesso";
+  } catch (err) {
+    alert("Erro: " + err.message);
+  }
+});
 
-      </div>
+// Gerar Prompt
+btnGerar.addEventListener("click", async () => {
+  const titulo = inputTitulo.value.trim();
+  const minutos = parseFloat(document.getElementById("input-minutos").value);
+  const ppm = parseFloat(document.getElementById("input-ppm").value) || PPM_PADRAO;
 
-      <!-- ============================================================ -->
-      <!-- ABA INTERNA: HISTÓRICO -->
-      <!-- ============================================================ -->
-      <div class="painel-interno" data-painel="historico">
-        <div class="cartao" style="flex: 1;">
-          <div class="cartao-header">
-            <h2>📜 Histórico do canal</h2>
-            <button id="btn-recarregar-historico" class="btn btn-ghost btn-sm">↻ Recarregar</button>
-          </div>
-          <div id="lista-historico" class="lista-historico" style="max-height: 400px;"></div>
-          <button id="btn-mais-historico" class="btn btn-secundario btn-sm oculto">Carregar mais</button>
-        </div>
-      </div>
+  if (!titulo) { statusGerar.textContent = "Digite ou gere um título."; statusGerar.className = "status erro"; return; }
+  if (!canalSelecionadoId) { statusGerar.textContent = "Selecione um canal."; statusGerar.className = "status erro"; return; }
+  if (!minutos || minutos <= 0) { statusGerar.textContent = "Duração inválida."; statusGerar.className = "status erro"; return; }
+  if (!traducoes || !systemPrompts) { statusGerar.textContent = "Dados não carregados."; statusGerar.className = "status erro"; return; }
 
-    </section>
+  btnGerar.disabled = true;
+  statusGerar.textContent = "Gerando...";
+  statusGerar.className = "status";
 
-    <!-- ============================================================ -->
-    <!-- MODAL: CRIAR CANAL -->
-    <!-- ============================================================ -->
-    <div id="modal-canal" class="modal oculto">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h2>➕ Novo canal</h2>
-          <button id="btn-fechar-modal" class="btn btn-ghost btn-sm">✕</button>
-        </div>
-        <div class="modal-body">
-          <label for="input-nome-canal">Nome do canal</label>
-          <input type="text" id="input-nome-canal" placeholder="Ex.: Paz na Madrugada" />
-          
-          <div class="grid-2" style="margin-top: 12px;">
-            <div class="campo">
-              <label for="select-momento-canal">Momento</label>
-              <select id="select-momento-canal">
-                <option value="manha_disposicao">🌅 Manhã</option>
-                <option value="madrugada_ansiedade">🌙 Madrugada</option>
-                <option value="noite_sono">🌙 Noite</option>
-              </select>
-            </div>
-            <div class="campo">
-              <label for="select-idioma-canal">Idioma</label>
-              <select id="select-idioma-canal">
-                <option value="pt-BR">🇧🇷 Português</option>
-                <option value="en-US">🇺🇸 Inglês</option>
-                <option value="es-LA">🇪🇸 Espanhol</option>
-                <option value="fr">🇫🇷 Francês</option>
-                <option value="ko">🇰🇷 Coreano</option>
-              </select>
-            </div>
-          </div>
-          <button id="btn-criar-canal" class="btn btn-primary" style="width: 100%; margin-top: 16px;">Criar canal</button>
-          <p class="status" id="status-canal"></p>
-        </div>
-      </div>
-    </div>
+  try {
+    const canalDoc = await getDoc(doc(db, "canais", canalSelecionadoId));
+    if (!canalDoc.exists()) throw new Error("Canal não encontrado.");
+    const canalData = canalDoc.data();
+    const momento = canalData.momento;
+    const idioma = canalData.idioma;
 
-  </section>
-</div>
+    await carregarBibliaDoStorage(idioma);
 
-<script type="module" src="app.js"></script>
-</body>
-</html>
+    const langData = traducoes.languages?.[idioma] || {};
+    const momentTemplates = traducoes.moment_templates || {};
+    const templateBlocos = momentTemplates[momento]?.[idioma] || momentTemplates[momento]?.["pt-BR"] || "";
+
+    const q = query(collection(db, "historico"), where("canalId", "==", canalSelecionadoId), orderBy("criadoEm", "desc"), limit(JANELA_REPETICAO));
+    const histSnap = await getDocs(q);
+    const historicoRecente = histSnap.docs.map((d) => d.data());
+
+    const arquetiposUsadosRecentes = itensUsadosRecentemente(historicoRecente, "arquetipos_usados");
+    const casosUsadosRecentes = itensUsadosRecentemente(historicoRecente, "casos_usados");
+
+    const duracao = calcularParametrosDeDuracao(minutos, ppm);
+    const distribuicao = gerarDistribuicaoBlocos();
+
+    let poolsArquetipos = ["ansiedade", "medo", "solidão", "preocupação", "insônia", "desânimo", "cansaço", "dúvida"];
+    let poolsCasos = ["Salmo 91", "Salmo 23", "Mateus 11:28", "Filipenses 4:6-7", "Isaías 41:10", "João 14:27"];
+
+    if (rawTitles) {
+      const todasPalavras = [];
+      for (const canal of Object.values(rawTitles)) {
+        for (const fase of ["antigos", "recentes", "virais"]) {
+          for (const item of (canal[fase] || [])) {
+            const palavras = (item.title || "").toLowerCase().split(/\s+/);
+            todasPalavras.push(...palavras);
+          }
+        }
+      }
+      if (todasPalavras.length > 0) {
+        const contagem = {};
+        for (const p of todasPalavras) {
+          if (p.length > 3) contagem[p] = (contagem[p] || 0) + 1;
+        }
+        const ordenadas = Object.entries(contagem).sort((a, b) => b[1] - a[1]);
+        const top10 = ordenadas.slice(0, 10).map(([p]) => p);
+        if (top10.length > 0) poolsArquetipos = top10;
+      }
+    }
+
+    const params = {
+      titulo,
+      ...duracao,
+      limite_anafora: escolherNumeroSemRepetir([2, 3, 4], historicoRecente, "limite_anafora"),
+      distribuicao,
+      palavrasPorBloco: calcularPalavrasPorBloco(distribuicao, duracao.palavrasAlvo),
+      arquetipos_evitar: escolherListaSemRepetir(poolsArquetipos, arquetiposUsadosRecentes, QTD_ARQUETIPOS_SUGERIDOS),
+      casos_evitar: escolherListaSemRepetir(poolsCasos, casosUsadosRecentes, QTD_CASOS_SUGERIDOS),
+    };
+
+    const promptFinal = montarPrompt(params, langData, templateBlocos);
+    resultadoPrompt.value = promptFinal;
+    parametrosDetalhe.textContent = JSON.stringify(
+      { canal: canalData.nome, momento, idioma, minutos: params.minutos, ppm: params.ppm, palavras_alvo: params.palavrasAlvo, palavras_min: params.palavrasMin, palavras_max: params.palavrasMax, perguntas_min: params.perguntasMin, humor_min: params.humorMin, limite_anafora: params.limite_anafora, distribuicao_blocos: params.distribuicao, arquetipos_evitar: params.arquetipos_evitar, casos_evitar: params.casos_evitar },
+      null, 2
+    );
+    cartaoResultado.classList.remove("oculto");
+
+    const revisao = montarMensagemRevisao(params, langData);
+    resultadoRevisao.value = revisao;
+    cartaoRevisao.classList.remove("oculto");
+
+    await addDoc(collection(db, "historico"), {
+      canalId: canalSelecionadoId,
+      titulo,
+      criadoEm: serverTimestamp(),
+      minutos: params.minutos,
+      palavras_alvo: params.palavrasAlvo,
+      limite_anafora: params.limite_anafora,
+      distribuicao_blocos: params.distribuicao,
+      momento,
+      idioma,
+      arquetipos_usados: params.arquetipos_evitar.slice(0, 3),
+      casos_usados: params.casos_evitar.slice(0, 3),
+      arquetipo_usado: ultimoArquetipo || null,
+    });
+
+    statusGerar.textContent = "✅ Prompt gerado!";
+    statusGerar.className = "status sucesso";
+    carregarHistorico(canalSelecionadoId, true);
+    atualizarContadorVideos(canalSelecionadoId);
+  } catch (err) {
+    console.error(err);
+    statusGerar.textContent = "Erro: " + err.message;
+    statusGerar.className = "status erro";
+  } finally {
+    btnGerar.disabled = false;
+  }
+});
+
+btnCopiar.addEventListener("click", async () => {
+  try { await navigator.clipboard.writeText(resultadoPrompt.value); btnCopiar.textContent = "Copiado!"; }
+  catch { resultadoPrompt.select(); document.execCommand("copy"); btnCopiar.textContent = "Copiado!"; }
+  setTimeout(() => { btnCopiar.textContent = "Copiar"; }, 1500);
+});
+
+btnCopiarRevisao.addEventListener("click", async () => {
+  try { await navigator.clipboard.writeText(resultadoRevisao.value); btnCopiarRevisao.textContent = "Copiado!"; }
+  catch { resultadoRevisao.select(); document.execCommand("copy"); btnCopiarRevisao.textContent = "Copiado!"; }
+  setTimeout(() => { btnCopiarRevisao.textContent = "Copiar"; }, 1500);
+});
+
+// ============================================================
+// ABA: FORMATAR PARÁGRAFOS
+// ============================================================
+function dividirEmFrases(paragrafo) {
+  const partes = paragrafo.split(/(?<=[.!?])\s+(?=[A-ZÀ-Ý0-9"“(\u2014\u2013])/);
+  return partes.map((p) => p.trim()).filter(Boolean);
+}
+
+function formatarParagrafos(texto, maxFrasesPorParagrafo = 3) {
+  const paragrafosOriginais = texto.split(/\n+/).map((p) => p.trim()).filter(Boolean);
+  const paragrafosFinais = [];
+  let totalAjustados = 0;
+  for (const paragrafo of paragrafosOriginais) {
+    const frases = dividirEmFrases(paragrafo);
+    if (frases.length <= maxFrasesPorParagrafo) {
+      paragrafosFinais.push(paragrafo);
+      continue;
+    }
+    totalAjustados++;
+    for (let i = 0; i < frases.length; i += maxFrasesPorParagrafo) {
+      paragrafosFinais.push(frases.slice(i, i + maxFrasesPorParagrafo).join(" "));
+    }
+  }
+  return { textoFormatado: paragrafosFinais.join("\n"), totalAjustados, totalParagrafosOriginais: paragrafosOriginais.length };
+}
+
+const entradaFormatar = document.getElementById("entrada-formatar");
+const btnFormatar = document.getElementById("btn-formatar");
+const statusFormatar = document.getElementById("status-formatar");
+const cartaoFormatado = document.getElementById("cartao-formatado");
+const resultadoFormatado = document.getElementById("resultado-formatado");
+const btnCopiarFormatado = document.getElementById("btn-copiar-formatado");
+
+btnFormatar.addEventListener("click", () => {
+  const texto = entradaFormatar.value.trim();
+  if (!texto) { statusFormatar.textContent = "Cole o roteiro."; statusFormatar.className = "status erro"; return; }
+  const { textoFormatado, totalAjustados, totalParagrafosOriginais } = formatarParagrafos(texto);
+  resultadoFormatado.value = textoFormatado;
+  cartaoFormatado.classList.remove("oculto");
+  statusFormatar.textContent = totalAjustados > 0 ? `${totalAjustados} de ${totalParagrafosOriginais} ajustados.` : "Nenhum parágrafo com mais de 3 frases.";
+  statusFormatar.className = "status sucesso";
+});
+
+btnCopiarFormatado.addEventListener("click", async () => {
+  try { await navigator.clipboard.writeText(resultadoFormatado.value); btnCopiarFormatado.textContent = "Copiado!"; }
+  catch { resultadoFormatado.select(); document.execCommand("copy"); btnCopiarFormatado.textContent = "Copiado!"; }
+  setTimeout(() => { btnCopiarFormatado.textContent = "Copiar"; }, 1500);
+});
+
+console.log("✅ Faith Prompt Engine carregado!");
