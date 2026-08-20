@@ -46,7 +46,7 @@ const QTD_CASOS_SUGERIDOS = 6;
 const PPM_PADRAO = 150;
 
 // ---------- URLs dos arquivos JSON no GitHub ----------
-const GITHUB_BASE = "https://raw.githubusercontent.com/lucaspires0690/meu_sistema_firebase/main/";
+const GITHUB_BASE = "https://raw.githubusercontent.com/lucaspires0690/Canal_Oracao/main/";
 const URL_TRANSLATIONS = GITHUB_BASE + "translations.json";
 const URL_SYSTEM_PROMPTS = GITHUB_BASE + "system_prompts.json";
 const URL_VALIDATED_RULES = GITHUB_BASE + "validated_rules.json";
