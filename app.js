@@ -60,6 +60,8 @@ const URL_TRANSLATIONS = GITHUB_BASE + "translations.json";
 const URL_SYSTEM_PROMPTS = GITHUB_BASE + "system_prompts.json";
 const URL_VALIDATED_RULES = GITHUB_BASE + "validated_rules.json";
 const URL_RAW_TITLES = GITHUB_BASE + "raw_titles.json";
+// ========== NOVA URL ==========
+const URL_TITLE_PATTERNS = GITHUB_BASE + "title_patterns.json";
 
 const BIBLE_MAP = {
   "pt-BR": "nvi.json",
@@ -69,7 +71,7 @@ const BIBLE_MAP = {
   "ko": "krv.json"
 };
 
-// ---------- BANCOS PARA GERADOR DE TÍTULOS ----------
+// ---------- BANCOS PARA GERADOR DE TÍTULOS (FALLBACK) ----------
 const ARQUETIPOS = [
   { id: "comando", peso: 30, label: "Comando" },
   { id: "pergunta", peso: 25, label: "Pergunta" },
@@ -97,6 +99,8 @@ let canais = [];
 let ultimoDocHistorico = null;
 let ultimoTituloGerado = "";
 let ultimoArquetipo = "";
+// ========== NOVA VARIÁVEL ==========
+let titlePatterns = null;
 
 // ============================================================
 // PERSISTÊNCIA LOCAL (PPM)
@@ -149,16 +153,19 @@ onAuthStateChanged(auth, async (user) => {
 // ============================================================
 async function carregarDados(user) {
   try {
-    const [trad, prompts, rules, titles] = await Promise.all([
+    // ========== MODIFICADO: Adicionado 'patterns' ==========
+    const [trad, prompts, rules, titles, patterns] = await Promise.all([
       fetch(URL_TRANSLATIONS).then(r => r.json()),
       fetch(URL_SYSTEM_PROMPTS).then(r => r.json()),
       fetch(URL_VALIDATED_RULES).then(r => r.json()),
-      fetch(URL_RAW_TITLES).then(r => r.json())
+      fetch(URL_RAW_TITLES).then(r => r.json()),
+      fetch(URL_TITLE_PATTERNS).then(r => r.json())
     ]);
     traducoes = trad;
     systemPrompts = prompts;
     validatedRules = rules;
     rawTitles = titles;
+    titlePatterns = patterns; // ========== NOVO ==========
     console.log("✅ Dados carregados do GitHub");
     if (user) await carregarBibliaDoStorage("pt-BR");
   } catch (err) {
@@ -284,7 +291,7 @@ document.getElementById("btn-criar-canal").addEventListener("click", async () =>
 document.getElementById("btn-recarregar-canais").addEventListener("click", carregarCanais);
 
 // ============================================================
-// GERADOR DE TÍTULOS
+// GERADOR DE TÍTULOS (REESCRITO COM titlePatterns)
 // ============================================================
 function escolherArquetipo(historicoRecente) {
   const contagem = { comando: 0, pergunta: 0, declaracao: 0, curiosidade: 0 };
@@ -308,6 +315,7 @@ function capitalize(str) {
   return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
+// ========== FUNÇÃO GERAR TITULO REEESCRITA ==========
 async function gerarTitulo(canalId, forcarNovo = false) {
   try {
     const canalDoc = await getDoc(doc(db, "canais", canalId));
@@ -324,33 +332,64 @@ async function gerarTitulo(canalId, forcarNovo = false) {
       arquétipo = outros[Math.floor(Math.random() * outros.length)].id;
     }
 
-    const doresDoMomento = DORES[canal.momento] || DORES["madrugada_ansiedade"];
-    const dor = doresDoMomento[Math.floor(Math.random() * doresDoMomento.length)];
-    const promessa = PROMESSAS[Math.floor(Math.random() * PROMESSAS.length)];
-    const comando = COMANDOS[Math.floor(Math.random() * COMANDOS.length)];
-    const temaCuriosidade = TEMAS_CURIOSIDADE[Math.floor(Math.random() * TEMAS_CURIOSIDADE.length)];
+    // ========== USAR titlePatterns se disponível ==========
+    let palavras = {};
+    if (titlePatterns && titlePatterns.words) {
+      const success = titlePatterns.words.success || {};
+      const momentoKey = canal.momento.includes("manha") ? "manha" : 
+                          canal.momento.includes("madrugada") ? "madrugada" : "noite";
+      palavras = {
+        comando: (success.imperativos || COMANDOS)[Math.floor(Math.random() * (success.imperativos || COMANDOS).length)],
+        dor: (success.dores || DORES[canal.momento] || DORES["madrugada_ansiedade"])[Math.floor(Math.random() * (success.dores || DORES[canal.momento] || DORES["madrugada_ansiedade"]).length)],
+        promessa: (success.beneficios || PROMESSAS)[Math.floor(Math.random() * (success.beneficios || PROMESSAS).length)],
+        momento: ((success.momentos || {})[momentoKey] || ["hoje"])[Math.floor(Math.random() * ((success.momentos || {})[momentoKey] || ["hoje"]).length)],
+        contexto: (success.contextos || ["sua vida"])[Math.floor(Math.random() * (success.contextos || ["sua vida"]).length)],
+        sinal: (success.sinais || TEMAS_CURIOSIDADE)[Math.floor(Math.random() * (success.sinais || TEMAS_CURIOSIDADE).length)],
+        numero: (success.numeros || ["3", "5", "7", "10"])[Math.floor(Math.random() * (success.numeros || ["3", "5", "7", "10"]).length)]
+      };
+    } else {
+      // Fallback: usar listas locais
+      const doresDoMomento = DORES[canal.momento] || DORES["madrugada_ansiedade"];
+      palavras = {
+        comando: COMANDOS[Math.floor(Math.random() * COMANDOS.length)],
+        dor: doresDoMomento[Math.floor(Math.random() * doresDoMomento.length)],
+        promessa: PROMESSAS[Math.floor(Math.random() * PROMESSAS.length)],
+        momento: "hoje",
+        contexto: "sua vida",
+        sinal: TEMAS_CURIOSIDADE[Math.floor(Math.random() * TEMAS_CURIOSIDADE.length)],
+        numero: ["3", "5", "7", "10"][Math.floor(Math.random() * 4)]
+      };
+    }
 
     let titulo = "";
     switch (arquétipo) {
       case "comando":
-        titulo = `${comando} Isso Quando ${capitalize(dor)} e Encontre ${capitalize(promessa)}`;
+        titulo = `${palavras.comando} Isso ${palavras.momento} e Encontre ${capitalize(palavras.promessa)}`;
         break;
       case "pergunta":
         const perguntas = [
-          `${capitalize(dor)}? ${capitalize(comando)} Esta Oração e ${capitalize(promessa)}`,
-          `Está com ${capitalize(dor)}? ${capitalize(comando)} Isso Agora`
+          `${capitalize(palavras.dor)}? ${palavras.comando} Esta Oração e ${capitalize(palavras.promessa)}`,
+          `Está com ${capitalize(palavras.dor)}? ${palavras.comando} Isso Agora`
         ];
         titulo = perguntas[Math.floor(Math.random() * perguntas.length)];
         break;
       case "declaracao":
-        titulo = `Que a ${capitalize(promessa)} de Deus Esteja Sobre Você Hoje`;
+        titulo = `Que a ${capitalize(palavras.promessa)} de Deus Esteja Sobre ${capitalize(palavras.contexto)}`;
         break;
       case "curiosidade":
-        const numeros = ["3", "5", "7", "10"];
-        titulo = `${numeros[Math.floor(Math.random() * numeros.length)]} ${temaCuriosidade} de que Deus Está ${capitalize(promessa)} Você`;
+        titulo = `${palavras.numero} ${palavras.sinal} de que Deus ${capitalize(palavras.promessa)} Você`;
         break;
       default:
-        titulo = `${comando} Isso Quando ${capitalize(dor)} e Encontre ${capitalize(promessa)}`;
+        titulo = `${palavras.comando} Isso ${palavras.momento} e Encontre ${capitalize(palavras.promessa)}`;
+    }
+
+    // ========== VERIFICAR PALAVRAS PROIBIDAS ==========
+    if (titlePatterns && titlePatterns.words && titlePatterns.words.failure) {
+      const proibidas = titlePatterns.words.failure.palavras || [];
+      if (proibidas.some(p => titulo.toLowerCase().includes(p))) {
+        console.warn("Título com palavra proibida, tentando novamente...");
+        return gerarTitulo(canalId, forcarNovo);
+      }
     }
 
     return { titulo, arquétipo };
