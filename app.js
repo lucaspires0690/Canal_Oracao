@@ -65,7 +65,7 @@ const URL_TRANSLATIONS = GITHUB_BASE + "translations.json";
 const URL_SYSTEM_PROMPTS = GITHUB_BASE + "system_prompts.json";
 const URL_VALIDATED_RULES = GITHUB_BASE + "validated_rules.json";
 const URL_RAW_TITLES = GITHUB_BASE + "raw_titles.json";
-const URL_TITLE_PATTERNS = GITHUB_BASE + "https://firebasestorage.googleapis.com/v0/b/roteiros-pre-historia.firebasestorage.app/o/data%2Ftitle_patterns.json?alt=media";
+const URL_TITLE_PATTERNS = "https://firebasestorage.googleapis.com/v0/b/roteiros-pre-historia.firebasestorage.app/o/data%2Ftitle_patterns.json?alt=media";
 
 const BIBLE_MAP = {
   "pt-BR": "nvi.json",
