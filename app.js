@@ -179,6 +179,44 @@ async function carregarBibliaDoStorage(idioma) {
 }
 
 // ============================================================
+// BUSCAR VERSÍCULO POR TEMA NO STORAGE
+// ============================================================
+async function buscarVersiculoPorTema(tema) {
+  try {
+    // Mapeamento de temas para versículos
+    const mapaTemas = {
+      "angústia": "Isaías 41:10 - Não temas, porque eu sou contigo; não te assombres, porque eu sou o teu Deus; eu te fortaleço, e te ajudo, e te sustento com a minha destra fiel.",
+      "desânimo": "Isaías 40:31 - Os que esperam no Senhor renovam as suas forças. Sobem com asas como águias, correm e não se cansam, caminham e não se fatigam.",
+      "medo": "Isaías 41:10 - Não temas, porque eu sou contigo; não te assombres, porque eu sou o teu Deus; eu te fortaleço, e te ajudo, e te sustento com a minha destra fiel.",
+      "ansiedade": "Filipenses 4:6-7 - Não andem ansiosos por coisa alguma, mas em tudo, pela oração e súplicas, e com ação de graças, apresentem seus pedidos a Deus. E a paz de God, que excede todo o entendimento, guardará os seus corações e as suas mentes em Cristo Jesus.",
+      "preocupação": "Filipenses 4:6-7 - Não andem ansiosos por coisa alguma...",
+      "proteção": "Salmo 91:1-2 - Aquele que habita no esconderijo do Altíssimo descansa à sombra do Todo-poderoso. Direi do Senhor: 'Ele é o meu refúgio e a minha fortaleza, o meu Deus, em quem confio.'",
+      "gratidão": "Salmo 118:24 - Este é o dia que o Senhor fez; regozijemo-nos e alegremo-nos nele.",
+      "solidão": "Deuteronômio 31:8 - O Senhor é quem vai à sua frente; estará com você, nunca o deixará, nunca o abandonará. Não tenha medo! Não se desanime!",
+      "força": "Isaías 40:31 - Os que esperam no Senhor renovam as suas forças. Sobem com asas como águias, correm e não se cansam, caminham e não se fatigam.",
+      "paz": "João 14:27 - Deixo-vos a paz, a minha paz vos dou; não vo-la dou como o mundo a dá. Não se turbe o vosso coração, nem se atemorize.",
+      "cansaço": "Isaías 40:31 - Os que esperam no Senhor renovam as suas forças...",
+      "noite": "Salmo 4:8 - Em paz me deito e logo adormeço, pois só tu, Senhor, me fazes habitar em segurança.",
+      "manhã": "Lamentações 3:22-23 - As misericórdias do Senhor são a causa de não sermos consumidos, pois as suas misericórdias não têm fim; renovam-se cada manhã. Grande é a tua fidelidade."
+    };
+
+    // Encontrar o versículo que corresponde ao tema
+    const temaLower = tema.toLowerCase();
+    for (const [chave, versiculo] of Object.entries(mapaTemas)) {
+      if (temaLower.includes(chave)) {
+        return versiculo;
+      }
+    }
+
+    // Fallback: se não encontrar, buscar um versículo genérico
+    return "João 14:27 - Deixo-vos a paz, a minha paz vos dou; não vo-la dou como o mundo a dá. Não se turbe o vosso coração, nem se atemorize.";
+  } catch (err) {
+    console.error("Erro ao buscar versículo:", err);
+    return "João 14:27 - Deixo-vos a paz, a minha paz vos dou; não vo-la dou como o mundo a dá. Não se turbe o vosso coração, nem se atemorize.";
+  }
+}
+
+// ============================================================
 // CANAIS
 // ============================================================
 async function carregarCanais() {
@@ -658,7 +696,7 @@ async function getTotalVideosCanal(canalId) {
 }
 
 // ============================================================
-// GERAR PROMPT
+// GERAR PROMPT (COM VERSÍCULOS BUSCADOS NO STORAGE)
 // ============================================================
 btnGerar.addEventListener("click", async () => {
   const titulo = inputTitulo.value.trim();
@@ -731,7 +769,15 @@ btnGerar.addEventListener("click", async () => {
     };
 
     const promptFinal = montarPrompt(params, langData, templateBlocos);
-    resultadoPrompt.value = promptFinal;
+
+    // ============================================================
+    // BUSCAR VERSÍCULO POR TEMA E SUBSTITUIR NO PROMPT
+    // ============================================================
+    const tema = titulo.toLowerCase();
+    const versiculo = await buscarVersiculoPorTema(tema);
+    const promptComVersiculos = promptFinal.replace(/\{\{VERSICULO\}\}/g, versiculo);
+
+    resultadoPrompt.value = promptComVersiculos;
     parametrosDetalhe.textContent = JSON.stringify(
       { canal: canalData.nome, momento, idioma, minutos: params.minutos, ppm: params.ppm, palavras_alvo: params.palavrasAlvo, palavras_min: params.palavrasMin, palavras_max: params.palavrasMax, perguntas_min: params.perguntasMin, humor_min: params.humorMin, limite_anafora: params.limite_anafora, distribuicao_blocos: params.distribuicao, arquetipos_evitar: params.arquetipos_evitar, casos_evitar: params.casos_evitar },
       null, 2
@@ -757,7 +803,7 @@ btnGerar.addEventListener("click", async () => {
       }
     }
 
-    statusGerar.textContent = "✅ Prompt gerado com sucesso!";
+    statusGerar.textContent = "✅ Prompt gerado com sucesso! (Versículos incluídos)";
     statusGerar.className = "status sucesso";
     carregarHistorico(canalId, true);
   } catch (err) {
@@ -848,4 +894,4 @@ document.querySelectorAll(".aba").forEach((botao) => {
   });
 });
 
-console.log("✅ Faith Prompt Engine carregado (modo API - otimizado)!");
+console.log("✅ Faith Prompt Engine carregado (com versículos automáticos)!");
