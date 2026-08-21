@@ -20,8 +20,8 @@
     <!-- ============================================================ -->
     <!-- TELA DE LOGIN -->
     <!-- ============================================================ -->
-    <div id="tela-login" class="login-container">
-        <div class="login-box">
+    <section id="tela-login" class="tela-login">
+        <div class="login-card">
             <div class="login-brand">
                 <span class="badge">Faith Prompt Engine</span>
                 <h1>📖 Canais de Oração</h1>
@@ -36,293 +36,227 @@
                 </svg>
                 Entrar com Google
             </button>
-            <p class="error-message" id="login-erro"></p>
+            <p class="erro" id="login-erro"></p>
         </div>
-    </div>
+    </section>
 
     <!-- ============================================================ -->
     <!-- APP PRINCIPAL -->
     <!-- ============================================================ -->
-    <div id="tela-app" class="container" style="display: none;">
+    <section id="tela-app" class="tela-app oculto">
         
-        <!-- ============================================================ -->
-        <!-- SIDEBAR -->
-        <!-- ============================================================ -->
-        <aside class="sidebar">
-            <div class="sidebar-header">
-                <h1>📖 Faith Engine</h1>
-                <span class="badge-sidebar">v2.0</span>
+        <!-- TOPO -->
+        <header class="topo">
+            <div class="topo-info">
+                <span class="badge">Faith Prompt Engine</span>
+                <h1>Canais de Oração</h1>
             </div>
-            
-            <nav class="sidebar-nav">
-                <a href="#" class="nav-item active" data-page="gerar">
-                    <i data-feather="sparkles"></i>
-                    <span>Gerar</span>
-                </a>
-                <a href="#" class="nav-item" data-page="canais">
-                    <i data-feather="folder"></i>
-                    <span>Canais</span>
-                </a>
-                <a href="#" class="nav-item" data-page="historico">
-                    <i data-feather="clock"></i>
-                    <span>Histórico</span>
-                </a>
-                <a href="#" class="nav-item" data-page="formatar">
-                    <i data-feather="edit-3"></i>
-                    <span>Formatar</span>
-                </a>
-            </nav>
-            
-            <div class="sidebar-footer">
-                <button id="btn-logout" class="btn btn-secondary" style="width:100%;">
-                    <i data-feather="log-out"></i>
-                    <span>Sair</span>
-                </button>
-            </div>
-        </aside>
+            <button id="btn-logout" class="btn btn-ghost">Sair</button>
+        </header>
+
+        <!-- ABAS (mantidas para o app.js) -->
+        <nav class="nav-aba">
+            <button class="aba ativa" data-aba="gerar">🎯 Gerar</button>
+            <button class="aba" data-aba="canais">📂 Canais</button>
+            <button class="aba" data-aba="historico">📜 Histórico</button>
+            <button class="aba" data-aba="formatar">📝 Formatar</button>
+        </nav>
 
         <!-- ============================================================ -->
-        <!-- MAIN CONTENT -->
+        <!-- PAINEL: GERAR -->
         <!-- ============================================================ -->
-        <main class="main-content">
+        <div class="painel ativo" data-painel="gerar">
             
-            <!-- ============================================================ -->
-            <!-- PÁGINA: GERAR -->
-            <!-- ============================================================ -->
-            <div id="page-gerar" class="page active">
-                
-                <div class="page-header">
-                    <h1>🎯 Gerar Conteúdo</h1>
-                    <span class="header-badge" id="canal-ativo-badge">
-                        📌 Canal: <strong id="canal-ativo-nome">Nenhum</strong>
-                        <span class="badge-status" id="canal-ativo-momento">—</span>
-                        <span class="badge-status" id="canal-ativo-idioma">—</span>
-                    </span>
-                </div>
-
-                <!-- Canal + Título -->
-                <div class="card">
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label for="select-canal">📌 Canal</label>
-                            <select id="select-canal">
-                                <option value="">— Carregando canais —</option>
-                            </select>
-                            <button id="btn-recarregar-canais" class="btn btn-ghost btn-sm" style="margin-top:4px;">
-                                <i data-feather="refresh-cw"></i> Recarregar
-                            </button>
-                        </div>
-                        <div class="form-group">
-                            <label for="input-titulo">📝 Título do vídeo</label>
-                            <div class="input-group">
-                                <textarea id="input-titulo" rows="2" placeholder="Digite ou gere um título..."></textarea>
-                                <div class="input-actions">
-                                    <button id="btn-gerar-titulo" class="btn btn-secondary btn-sm" title="Gerar título com IA">
-                                        <i data-feather="zap"></i>
-                                    </button>
-                                    <button id="btn-refazer-titulo" class="btn btn-secondary btn-sm" title="Refazer título">
-                                        <i data-feather="rotate-ccw"></i>
-                                    </button>
-                                    <button id="btn-salvar-titulo" class="btn btn-primary btn-sm" title="Salvar título">
-                                        <i data-feather="save"></i> Salvar
-                                    </button>
-                                </div>
-                            </div>
-                            <div class="titulo-status">
-                                <span class="badge-status" id="badge-arquetipo">—</span>
-                                <span id="video-counter">Vídeo #0</span>
-                                <span class="badge-status badge-success" id="status-titulo-salvo" style="display:none;">
-                                    <i data-feather="check-circle"></i> Salvo
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Duração -->
-                <div class="card">
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label for="input-minutos">⏱️ Duração (min)</label>
-                            <input type="number" id="input-minutos" min="1" step="0.5" value="10" />
-                        </div>
-                        <div class="form-group" style="display:flex; align-items:center; justify-content:center; color: var(--cor-texto-secundario);">
-                            <span>🔊 PPM fixo: <strong>150</strong> (padrão)</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Botão Gerar -->
-                <button id="btn-gerar" class="btn btn-primary btn-lg">
-                    <span id="btn-gerar-texto">🚀 Gerar Prompt</span>
-                    <span id="btn-gerar-spinner" class="spinner-btn oculto">⏳</span>
-                </button>
-                <p class="status" id="status-gerar"></p>
-
-                <!-- Resultado: Prompt -->
-                <div class="card oculto" id="cartao-resultado">
-                    <div class="card-header">
-                        <h2>📋 Prompt pronto</h2>
-                        <button id="btn-copiar" class="btn btn-ghost btn-sm">
-                            <i data-feather="copy"></i> Copiar
-                        </button>
-                    </div>
-                    <textarea id="resultado-prompt" readonly spellcheck="false"></textarea>
-                    <details>
-                        <summary>📊 Parâmetros sorteados</summary>
-                        <pre id="parametros-detalhe"></pre>
-                    </details>
-                </div>
-
-                <!-- Resultado: Revisão -->
-                <div class="card oculto" id="cartao-revisao">
-                    <div class="card-header">
-                        <h2>🔁 Mensagem de revisão</h2>
-                        <button id="btn-copiar-revisao" class="btn btn-ghost btn-sm">
-                            <i data-feather="copy"></i> Copiar
-                        </button>
-                    </div>
-                    <textarea id="resultado-revisao" readonly spellcheck="false"></textarea>
-                </div>
-
+            <!-- BADGE: CANAL ATIVO -->
+            <div class="cartao" id="canal-ativo-badge">
+                <span>📌 Canal ativo:</span>
+                <strong id="canal-ativo-nome">Nenhum</strong>
+                <span class="badge-status" id="canal-ativo-momento">—</span>
+                <span class="badge-status" id="canal-ativo-idioma">—</span>
             </div>
 
-            <!-- ============================================================ -->
-            <!-- PÁGINA: CANAIS -->
-            <!-- ============================================================ -->
-            <div id="page-canais" class="page">
-                
-                <div class="page-header">
-                    <h1>📂 Canais</h1>
+            <!-- Canal + Título -->
+            <div class="grid-2">
+                <div class="cartao">
+                    <label for="select-canal">📌 Canal</label>
+                    <select id="select-canal">
+                        <option value="">— Carregando canais —</option>
+                    </select>
+                    <button id="btn-recarregar-canais" class="btn btn-ghost btn-sm">↻ Recarregar</button>
                 </div>
-
-                <!-- Criar canal -->
-                <div class="card">
-                    <h2>➕ Novo canal</h2>
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label for="input-nome-canal">Nome do canal</label>
-                            <input type="text" id="input-nome-canal" placeholder="Ex.: Paz na Madrugada" />
-                        </div>
-                        <div class="form-group">
-                            <label for="select-momento-canal">Momento</label>
-                            <select id="select-momento-canal">
-                                <option value="manha_disposicao">🌅 Manhã</option>
-                                <option value="madrugada_ansiedade">🌙 Madrugada</option>
-                                <option value="noite_sono">🌙 Noite</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="select-idioma-canal">Idioma</label>
-                            <select id="select-idioma-canal">
-                                <option value="pt-BR">🇧🇷 Português</option>
-                                <option value="en-US">🇺🇸 Inglês</option>
-                                <option value="es-LA">🇪🇸 Espanhol</option>
-                                <option value="fr">🇫🇷 Francês</option>
-                                <option value="ko">🇰🇷 Coreano</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="input-url-canal">🔗 URL do YouTube</label>
-                            <input type="url" id="input-url-canal" placeholder="https://youtube.com/@meucanal" />
-                        </div>
+                <div class="cartao">
+                    <label for="input-titulo">📝 Título do vídeo</label>
+                    <div class="input-group">
+                        <textarea id="input-titulo" rows="2" placeholder="Digite ou gere um título..."></textarea>
+                        <button id="btn-gerar-titulo" class="btn btn-secundario btn-sm" title="Gerar título com IA">✨</button>
+                        <button id="btn-refazer-titulo" class="btn btn-secundario btn-sm" title="Refazer título">🔄</button>
+                        <button id="btn-salvar-titulo" class="btn btn-primary btn-sm" title="Salvar título">💾 Salvar</button>
                     </div>
-                    <div style="display:flex; gap:8px; margin-top:8px;">
-                        <button id="btn-criar-canal" class="btn btn-primary">
+                    <div class="titulo-status">
+                        <span class="badge-status" id="badge-arquetipo">—</span>
+                        <span id="video-counter">Vídeo #0</span>
+                        <span class="badge-status" id="status-titulo-salvo" style="display:none;">✅ Salvo</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Duração -->
+            <div class="grid-2">
+                <div class="cartao">
+                    <label for="input-minutos">⏱️ Duração (min)</label>
+                    <input type="number" id="input-minutos" min="1" step="0.5" value="10" />
+                </div>
+                <div class="cartao" style="display:flex; align-items:center; justify-content:center; color:var(--texto-fraco);">
+                    <span>🔊 PPM fixo: <strong>150</strong> (padrão)</span>
+                </div>
+            </div>
+
+            <!-- Botão Gerar -->
+            <button id="btn-gerar" class="btn btn-primary btn-lg">
+                <span id="btn-gerar-texto">🚀 Gerar Prompt</span>
+                <span id="btn-gerar-spinner" class="spinner oculto">⏳</span>
+            </button>
+            <p class="status" id="status-gerar"></p>
+
+            <!-- Resultado: Prompt -->
+            <div class="cartao oculto" id="cartao-resultado">
+                <div class="cartao-header">
+                    <h2>📋 Prompt pronto</h2>
+                    <button id="btn-copiar" class="btn btn-ghost btn-sm">📄 Copiar</button>
+                </div>
+                <textarea id="resultado-prompt" readonly spellcheck="false"></textarea>
+                <details>
+                    <summary>📊 Parâmetros sorteados</summary>
+                    <pre id="parametros-detalhe"></pre>
+                </details>
+            </div>
+
+            <!-- Resultado: Revisão -->
+            <div class="cartao oculto" id="cartao-revisao">
+                <div class="cartao-header">
+                    <h2>🔁 Mensagem de revisão</h2>
+                    <button id="btn-copiar-revisao" class="btn btn-ghost btn-sm">📄 Copiar</button>
+                </div>
+                <textarea id="resultado-revisao" readonly spellcheck="false"></textarea>
+            </div>
+
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- PAINEL: CANAIS -->
+        <!-- ============================================================ -->
+        <div class="painel" data-painel="canais">
+            
+            <!-- Criar canal -->
+            <div class="cartao">
+                <h2>➕ Novo canal</h2>
+                <div class="grid-2">
+                    <div class="campo">
+                        <label for="input-nome-canal">Nome do canal</label>
+                        <input type="text" id="input-nome-canal" placeholder="Ex.: Paz na Madrugada" />
+                    </div>
+                    <div class="campo">
+                        <label for="select-momento-canal">Momento</label>
+                        <select id="select-momento-canal">
+                            <option value="manha_disposicao">🌅 Manhã</option>
+                            <option value="madrugada_ansiedade">🌙 Madrugada</option>
+                            <option value="noite_sono">🌙 Noite</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="grid-2">
+                    <div class="campo">
+                        <label for="select-idioma-canal">Idioma</label>
+                        <select id="select-idioma-canal">
+                            <option value="pt-BR">🇧🇷 Português</option>
+                            <option value="en-US">🇺🇸 Inglês</option>
+                            <option value="es-LA">🇪🇸 Espanhol</option>
+                            <option value="fr">🇫🇷 Francês</option>
+                            <option value="ko">🇰🇷 Coreano</option>
+                        </select>
+                    </div>
+                    <div class="campo">
+                        <label for="input-url-canal">🔗 URL do YouTube</label>
+                        <input type="url" id="input-url-canal" placeholder="https://youtube.com/@meucanal" />
+                    </div>
+                </div>
+                <div class="grid-2">
+                    <div class="campo" style="display:flex; align-items:flex-end;">
+                        <button id="btn-criar-canal" class="btn btn-primary" style="width:100%;">
                             <span id="btn-criar-texto">Criar canal</span>
-                            <span id="btn-criar-spinner" class="spinner-btn oculto">⏳</span>
-                        </button>
-                        <button id="btn-cancelar-edicao" class="btn btn-ghost oculto">Cancelar edição</button>
-                    </div>
-                    <p class="status" id="status-canal"></p>
-                </div>
-
-                <!-- Lista de canais -->
-                <div class="card">
-                    <div class="card-header">
-                        <h2>📁 Meus canais</h2>
-                    </div>
-                    <div id="lista-canais"></div>
-                </div>
-
-            </div>
-
-            <!-- ============================================================ -->
-            <!-- PÁGINA: HISTÓRICO -->
-            <!-- ============================================================ -->
-            <div id="page-historico" class="page">
-                
-                <div class="page-header">
-                    <h1>📜 Histórico</h1>
-                    <button id="btn-recarregar-historico" class="btn btn-secondary btn-sm">
-                        <i data-feather="refresh-cw"></i> Recarregar
-                    </button>
-                </div>
-
-                <div class="card">
-                    <div id="lista-historico"></div>
-                    <button id="btn-mais-historico" class="btn btn-secondary btn-sm oculto" style="margin-top:12px;">
-                        Carregar mais
-                    </button>
-                </div>
-
-            </div>
-
-            <!-- ============================================================ -->
-            <!-- PÁGINA: FORMATAR -->
-            <!-- ============================================================ -->
-            <div id="page-formatar" class="page">
-                
-                <div class="page-header">
-                    <h1>📝 Formatar Roteiro</h1>
-                </div>
-
-                <div class="card">
-                    <h2>📝 FORMATAR ROTEIRO GERADO</h2>
-                    <p class="instructions">Cole o roteiro final para quebrar parágrafos com mais de 3 frases.</p>
-                    <textarea id="entrada-formatar" placeholder="Cole o roteiro completo aqui..." spellcheck="false"></textarea>
-                    <button id="btn-formatar" class="btn btn-primary">
-                        <i data-feather="edit-3"></i> FORMATAR ROTEIRO GERADO
-                    </button>
-                    <p class="status" id="status-formatar"></p>
-                </div>
-
-                <div class="card oculto" id="cartao-formatado">
-                    <div class="card-header">
-                        <h2>✅ Resultado formatado</h2>
-                        <span id="contagem-palavras" class="text-muted" style="font-size:0.85rem;"></span>
-                        <button id="btn-copiar-formatado" class="btn btn-ghost btn-sm">
-                            <i data-feather="copy"></i> Copiar
+                            <span id="btn-criar-spinner" class="spinner oculto">⏳</span>
                         </button>
                     </div>
-                    <textarea id="resultado-formatado" readonly spellcheck="false"></textarea>
+                    <div class="campo" style="display:flex; align-items:flex-end;">
+                        <button id="btn-cancelar-edicao" class="btn btn-ghost oculto" style="width:100%;">Cancelar edição</button>
+                    </div>
                 </div>
-
+                <p class="status" id="status-canal"></p>
             </div>
 
-        </main>
-    </div>
+            <!-- Lista de canais -->
+            <div class="cartao">
+                <div class="cartao-header">
+                    <h2>📁 Meus canais</h2>
+                </div>
+                <div id="lista-canais" class="lista-canais"></div>
+            </div>
+
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- PAINEL: HISTÓRICO -->
+        <!-- ============================================================ -->
+        <div class="painel" data-painel="historico">
+            <div class="cartao">
+                <div class="cartao-header">
+                    <h2>📜 Histórico do canal</h2>
+                    <button id="btn-recarregar-historico" class="btn btn-ghost btn-sm">↻ Recarregar</button>
+                </div>
+                <div id="lista-historico" class="lista-historico"></div>
+                <button id="btn-mais-historico" class="btn btn-secundario btn-sm oculto">Carregar mais</button>
+            </div>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- PAINEL: FORMATAR -->
+        <!-- ============================================================ -->
+        <div class="painel" data-painel="formatar">
+            <div class="cartao">
+                <h2>📝 FORMATAR ROTEIRO GERADO</h2>
+                <p class="dica">Cole o roteiro final para quebrar parágrafos com mais de 3 frases.</p>
+                <textarea id="entrada-formatar" placeholder="Cole o roteiro completo aqui..." spellcheck="false"></textarea>
+                <button id="btn-formatar" class="btn btn-primary">📝 FORMATAR ROTEIRO GERADO</button>
+                <p class="status" id="status-formatar"></p>
+            </div>
+            <div class="cartao oculto" id="cartao-formatado">
+                <div class="cartao-header">
+                    <h2>✅ Resultado formatado</h2>
+                    <span id="contagem-palavras" style="color:var(--texto-fraco);font-size:0.85rem;"></span>
+                    <button id="btn-copiar-formatado" class="btn btn-ghost btn-sm">📄 Copiar</button>
+                </div>
+                <textarea id="resultado-formatado" readonly spellcheck="false"></textarea>
+            </div>
+        </div>
+
+    </section>
 
     <!-- ============================================================ -->
     <!-- MODAL DE EDIÇÃO DE CANAL -->
     <!-- ============================================================ -->
-    <div id="modal-editar-canal" class="modal" style="display:none;">
+    <div id="modal-editar-canal" class="modal oculto">
         <div class="modal-content">
             <div class="modal-header">
-                <h3>✏️ Editar canal</h3>
-                <button id="btn-fechar-modal" class="btn-icon" title="Fechar">
-                    <i data-feather="x"></i>
-                </button>
+                <h2>✏️ Editar canal</h2>
+                <button id="btn-fechar-modal" class="btn btn-ghost btn-sm">✕</button>
             </div>
             <div class="modal-body">
                 <input type="hidden" id="edit-canal-id" />
-                
-                <div class="form-group">
+                <div class="campo">
                     <label for="edit-nome-canal">Nome do canal</label>
                     <input type="text" id="edit-nome-canal" />
                 </div>
-                
-                <div class="form-group">
+                <div class="campo">
                     <label for="edit-momento-canal">Momento</label>
                     <select id="edit-momento-canal">
                         <option value="manha_disposicao">🌅 Manhã</option>
@@ -330,8 +264,7 @@
                         <option value="noite_sono">🌙 Noite</option>
                     </select>
                 </div>
-                
-                <div class="form-group">
+                <div class="campo">
                     <label for="edit-idioma-canal">Idioma</label>
                     <select id="edit-idioma-canal">
                         <option value="pt-BR">🇧🇷 Português</option>
@@ -341,15 +274,11 @@
                         <option value="ko">🇰🇷 Coreano</option>
                     </select>
                 </div>
-                
-                <div class="form-group">
+                <div class="campo">
                     <label for="edit-url-canal">🔗 URL do YouTube</label>
                     <input type="url" id="edit-url-canal" placeholder="https://youtube.com/@meucanal" />
                 </div>
-                
-                <button id="btn-salvar-edicao" class="btn btn-primary">
-                    <i data-feather="save"></i> Salvar alterações
-                </button>
+                <button id="btn-salvar-edicao" class="btn btn-primary">💾 Salvar alterações</button>
                 <p class="status" id="status-edicao"></p>
             </div>
         </div>
@@ -359,14 +288,5 @@
     <!-- SCRIPTS -->
     <!-- ============================================================ -->
     <script type="module" src="app.js"></script>
-    
-    <!-- Inicializa os ícones Feather -->
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            if (typeof feather !== 'undefined') {
-                feather.replace();
-            }
-        });
-    </script>
 </body>
 </html>
