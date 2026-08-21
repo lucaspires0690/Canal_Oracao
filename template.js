@@ -13,14 +13,13 @@ NICHO: Oração Cristã e Vida Devocional
 
 SUBNICHOS:
 → Oração e Acolhimento (Paz, Ansiedade, Medo, Insônia, Solidão)
-→ Proteção e Cobertura Espiritual (Salmo 91, Família, Lar)
+→ Proteção e Cobertura Espiritual (Salmos, Família, Lar)
 → Gratidão e Renovação (Manhã, Ação de Graças, Começar o Dia)
 
 REGRA ABSOLUTA
 Todo roteiro deve permanecer 100% dentro do nicho identificado pelo título.
 Nunca introduza temas de outros nichos como:
 ❌ política ❌ futebol ❌ economia ❌ notícias mundiais ❌ teorias da conspiração ❌ profecias apocalípticas
-A conexão com o cotidiano é permitida e obrigatória, mas apenas como espelho da experiência humana que a oração alcança.
 
 ════════════════════════════════════════════════
 🎯 FOCO CENTRAL
@@ -32,13 +31,6 @@ O roteiro não debate doutrinas.
 O roteiro entrega a Palavra como remédio para a alma.
 Nunca prescreve comportamentos de forma agressiva.
 O espectador deve sentir que está sendo amado, cuidado e guiado — não julgado ou pressionado.
-
-════════════════════════════════════════════════
-🎬 IMERSÃO ESPIRITUAL — REGRA ABSOLUTA
-════════════════════════════════════════════════
-
-Se uma verdade bíblica puder ser apresentada como explicação ou como experiência, escolha sempre a experiência.
-Ordem preferencial: Sentimento → Palavra → Oração → Promessa. Nunca o contrário.
 
 ════════════════════════════════════════════════
 🎯 OBJETIVO NARRATIVO
@@ -62,30 +54,36 @@ A revelação final deve responder com uma promessa bíblica que acalma e fortal
 
 Antes de escrever qualquer parte do roteiro, analise silenciosamente o título acima e execute esta árvore de decisão:
 
-1. **IDENTIFIQUE A DOR OU EMOÇÃO DOMINANTE** procurando estas palavras no título:
+1. IDENTIFIQUE A DOR OU EMOÇÃO DOMINANTE procurando estas palavras no título:
    - Se o título contém: "medo", "ansiedade", "preocupação", "coração", "aflito", "angústia", "desespero", "noite", "madrugada", "insônia", "acordar" → DOR = MEDO/ANSIEDADE
    - Se o título contém: "casa", "família", "lar", "proteção", "cobertura", "guarda", "Salmo 91", "segurança", "mal", "perigo" → DOR = PROTEÇÃO/LAR
    - Se o título contém: "agradecer", "gratidão", "bênção", "começar", "manhã", "despertar", "novo dia", "renovação" → DOR = GRATIDÃO/MANHÃ
    - Se o título contém: "solidão", "sozinho", "abandonado", "carência", "amigo", "companhia" → DOR = SOLIDÃO/CARÊNCIA
-   - Se nenhuma palavra-chave for encontrada, use como padrão a dor mais provável com base no contexto geral (ex: "oração" geralmente indica MEDO/ANSIEDADE).
 
-2. **IDENTIFIQUE O MOMENTO DO DIA** ou contexto:
+2. IDENTIFIQUE O MOMENTO DO DIA ou contexto:
    - Se o título tem: "madrugada", "3h", "noite", "dormir", "repousar" → MOMENTO = MADRUGADA/NOITE
    - Se o título tem: "manhã", "despertar", "começar" → MOMENTO = MANHÃ
-   - Se nenhum, use o momento que melhor se encaixa com a dor (ex: ansiedade → madrugada; proteção → qualquer horário).
 
-3. **ESCOLHA O GANCHO** com base na dor identificada:
-   - **Medo/Ansiedade** → Gancho Físico/Sensorial (descrever a sensação no corpo). Ex: "Você acordou com o coração apertado? O silêncio da madrugada parece gritar, não parece?"
-   - **Proteção/Lar** → Gancho de Declaração/Bênção (falar a bênção diretamente). Ex: "Que a proteção de Deus esteja sobre sua casa hoje."
-   - **Gratidão/Manhã** → Gancho de Agradecimento (começar com gratidão). Ex: "Querido Pai Celestial, eu te agradeço por me dares este dia."
-   - **Solidão/Carência** → Gancho de Acolhimento (validar a solidão). Ex: "Você pode estar se sentindo sozinho agora, mas Deus está bem ao seu lado."
+3. ESCOLHA O GANCHO com base na dor identificada:
+   - Medo/Ansiedade → Gancho Físico/Sensorial. Ex: "Você acordou com o coração apertado? O silêncio da madrugada parece gritar, não parece?"
+   - Proteção/Lar → Gancho de Declaração/Bênção. Ex: "Que a proteção de Deus esteja sobre sua casa hoje."
+   - Gratidão/Manhã → Gancho de Agradecimento. Ex: "Querido Pai Celestial, eu te agradeço por me dares este dia."
+   - Solidão/Carência → Gancho de Acolhimento. Ex: "Você pode estar se sentindo sozinho agora, mas Deus está bem ao seu lado."
 
-4. **ESCOLHA A PALAVRA-CHAVE CENTRAL** (para repetição suave):
+4. ESCOLHA A PALAVRA-CHAVE CENTRAL (para repetição suave):
    - Escolha uma palavra-chave forte do título ou da dor (ex: "paz", "proteção", "amor", "gratidão", "esperança").
    - Essa palavra será repetida naturalmente ao longo do roteiro, pelo menos 5 vezes, como um mantra que reforça a mensagem.
 
-Use essas decisões para guiar TODAS as escolhas do roteiro: o gancho, o tom, os versículos, a forma de encerramento.
+5. **ESCOLHA O VERSÍCULO E ESCREVA-O COMPLETAMENTE**:
+   - Analise o título e identifique o tema central.
+   - Escolha UM versículo bíblico que seja PERFEITO para esse tema.
+   - Escreva o texto COMPLETO do versículo, com a referência.
+   - Exemplo: "Isaías 40:31 - Os que esperam no Senhor renovam as suas forças."
+   - Exemplo: "Filipenses 4:6-7 - Não andem ansiosos por coisa alguma...".
+   - Use a tradução Almeida (ARC ou ARA) ou NVI.
+   - Coloque este versículo COMPLETO no Bloco 3 e no Bloco 6.
 
+Use essas decisões para guiar TODAS as escolhas do roteiro: as cenas escolhidas, os ângulos do Bloco 3, o tom geral, o tipo de revelação final e o encerramento.
 Essa análise é estritamente interna — um passo de raciocínio antes de escrever. NUNCA exponha, liste, resuma ou mencione essa análise na resposta. Vá direto para o passo abaixo.
 
 ════════════════════════════════════════════════
@@ -103,16 +101,16 @@ Faixa aceitável: entre <<PALAVRAS_MIN>> e <<PALAVRAS_MAX>> palavras. Nunca entr
 Estes valores substituem quaisquer valores fixos usados em roteiros anteriores. Use exatamente estes parâmetros neste roteiro:
 
 → Perguntas retóricas (total mínimo): <<PERGUNTAS_MIN>>
-→ Momentos de consolo/declarações de paz: <<HUMOR_MIN>> (frases como "Você não está sozinho", "Deus está com você", "Entregue isso a Ele")
+→ Momentos de consolo/declarações de paz: <<HUMOR_MIN>>
 → Limite de repetições consecutivas de qualquer estrutura/frase/sujeito: <<LIMITE_ANAFORA>> (na repetição seguinte, quebre completamente o padrão)
 → Distribuição de palavras por bloco (% do total de <<PALAVRAS_ALVO>> palavras definido acima):
    B1 — Gancho → <<B1>>% (~<<PALAVRAS_B1>> palavras)
    B2 — Acolhimento → <<B2>>% (~<<PALAVRAS_B2>> palavras)
    B3 — Oração Principal → <<B3>>% (~<<PALAVRAS_B3>> palavras)
-   B4 — Virada / Paradoxo → <<B4>>% (~<<PALAVRAS_B4>> palavras)
+   B4 — Virada → <<B4>>% (~<<PALAVRAS_B4>> palavras)
    B5 — Tensão Honesta → <<B5>>% (~<<PALAVRAS_B5>> palavras)
-   B6 — Promessa / Revelação → <<B6>>% (~<<PALAVRAS_B6>> palavras)
-   B7 — Encerramento / Bênção → <<B7>>% (~<<PALAVRAS_B7>> palavras)
+   B6 — Promessa → <<B6>>% (~<<PALAVRAS_B6>> palavras)
+   B7 — Encerramento → <<B7>>% (~<<PALAVRAS_B7>> palavras)
 
 NÃO REUTILIZE estes exemplos de dores ou situações (já usados em roteiros recentes deste canal):
 <<ARQUETIPOS_EVITAR>>
@@ -128,18 +126,20 @@ Se for usar um versículo ou uma situação de dor específica, prefira algo for
 
 BLOCO 1 → GANCHO (de acordo com a árvore de decisão)
 BLOCO 2 → ACOLHIMENTO E VALIDAÇÃO DA DOR
-BLOCO 3 → ORAÇÃO PRINCIPAL E ENTREGA
+BLOCO 3 → ORAÇÃO PRINCIPAL E ENTREGA (inclua o VERSÍCULO COMPLETO aqui)
 BLOCO 4 → VIRADA / PARADOXO BÍBLICO
 BLOCO 5 → TENSÃO HONESTA (admitir a luta)
-BLOCO 6 → PROMESSA / REVELAÇÃO BÍBLICA
+BLOCO 6 → PROMESSA / REVELAÇÃO BÍBLICA (inclua o VERSÍCULO COMPLETO aqui)
 BLOCO 7 → ENCERRAMENTO E BÊNÇÃO FINAL
+
+Nenhum bloco existe isoladamente. Cada bloco empurra naturalmente para o próximo.
 
 ════════════════════════════════════════════════
 🎭 TESTEMUNHOS / MICRO-HISTÓRIAS OBRIGATÓRIOS
 ════════════════════════════════════════════════
 
 Entre 2 e 4 micro-histórias/testemunhos breves (situações hipotéticas, mas realistas). Cada uma:
-- Apresenta uma pessoa em uma situação de luta (ex: uma mãe que acorda preocupada com os filhos, um jovem com medo do futuro, alguém que perdeu o emprego)
+- Apresenta uma pessoa em uma situação de luta (ex: uma mãe que acorda preocupada com os filhos, um jovem com medo do futuro)
 - Mostra como a oração ou a Palavra trouxe consolo ou mudança
 - Dura entre 30 e 70 palavras
 - Soa como uma história real, não genérica
@@ -202,13 +202,13 @@ BLOCO 3 — ORAÇÃO PRINCIPAL E ENTREGA
 Este é o coração do roteiro. A oração em si.
 Deve ser:
 - Em primeira pessoa (o espectador está orando junto com o narrador).
-- Entrelaçada com versículos bíblicos (pelo menos 2 referências explícitas aqui).
+- Entrelaçada com o VERSÍCULO COMPLETO que você escolheu (escreva o texto completo, não apenas a referência).
 - Específica para a dor identificada (ex: se for medo, ore por paz; se for proteção, ore por cobertura; se for gratidão, ore por reconhecimento).
 
 Estrutura sugerida:
 1. Chamada a Deus ("Pai Celestial", "Senhor Jesus", "Espírito Santo").
 2. Reconhecimento da necessidade ("Eu entrego minha ansiedade em Tuas mãos...").
-3. Pedido baseado na Palavra ("Tua Palavra diz que Tu és o meu refúgio...").
+3. Pedido baseado na Palavra ("Tua Palavra diz que..." — cite o versículo completo aqui).
 4. Declaração de fé ("Eu creio que Tu estás cuidando de mim...").
 5. Entrega ("Eu deposito isso em Tuas mãos agora").
 
@@ -248,12 +248,7 @@ BLOCO 6 — PROMESSA / REVELAÇÃO BÍBLICA
 ════════════════════════════════════════════════
 
 Responda ao título com a promessa bíblica que resolve a dor.
-Use versículos específicos (pelo menos 2 aqui).
-
-Exemplos extraídos dos dados:
-- "Filipenses 4:7 - A paz de Deus, que excede todo entendimento, guardará seu coração."
-- "Salmos 34:7 - O anjo do Senhor acampa ao redor dos que o temem."
-- "Isaías 26:3 - Você guardará em perfeita paz aquele cuja mente está firme em Ti."
+Use o VERSÍCULO COMPLETO que você escolheu (escreva o texto completo, não apenas a referência).
 
 Escalone a promessa:
 - Da situação específica → para o caráter de Deus → para a certeza da salvação → para a paz eterna.
@@ -274,17 +269,6 @@ Exemplos extraídos dos dados:
 Tom mais lento, pausado, contemplativo.
 NUNCA use CTA (call to action) como "se inscreva", "curta", "comente". Isso quebra a experiência.
 Apenas entregue a bênção final e o encerramento.
-
-════════════════════════════════════════════════
-🙏 VERSÍCULOS E REFERÊNCIAS BÍBLICAS
-════════════════════════════════════════════════
-
-Distribua os versículos ao longo do roteiro:
-- Pelo menos 1 no Bloco 2 (acolhimento)
-- Pelo menos 2 no Bloco 3 (oração)
-- Pelo menos 1 no Bloco 6 (promessa)
-
-Use a tradução Almeida ou NVI (ou a que for mais comum para seu público). Sempre mencione o livro, capítulo e versículo (ex: "Salmo 23, versículo 1").
 
 ════════════════════════════════════════════════
 😌 MOMENTOS DE CONSOLO E REPETIÇÃO SUAVE
@@ -389,7 +373,7 @@ Antes de entregar a resposta final, confirme também (sem expor isso na resposta
 - Pelo menos <<PERGUNTAS_MIN>> perguntas retóricas
 - Pelo menos <<HUMOR_MIN>> momentos de consolo/declarações de paz
 - Pelo menos 2 testemunhos ou micro-histórias
-- Pelo menos 2 versículos bíblicos citados explicitamente
+- Pelo menos 2 versículos bíblicos completos (com referência e texto)
 - Pelo menos 5 repetições suaves da palavra-chave central (definida na Etapa 0)
 - Nenhum parágrafo com mais de 3 frases
 - Ritmo de respiração (frases curtas e médias alternadas, conforme instruído)
