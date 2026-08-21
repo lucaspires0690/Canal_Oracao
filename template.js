@@ -49,7 +49,7 @@ A revelação final deve responder com uma promessa bíblica que acalma e fortal
 "<<TITULO>>"
 
 ════════════════════════════════════════════════
-🧬 ETAPA 0 — ANÁLISE DO TÍTULO, ESCOLHA DO VERSÍCULO E DEFINIÇÃO DO GANCHO
+🧬 ETAPA 0 — ANÁLISE DO TÍTULO E ESCOLHA DO VERSÍCULO
 ════════════════════════════════════════════════
 
 **ANTES DE ESCREVER QUALQUER COISA, você DEVE executar esta análise silenciosamente:**
@@ -60,180 +60,112 @@ A revelação final deve responder com uma promessa bíblica que acalma e fortal
    - Qual é a PROMESSA que o título faz? (ex: paz, proteção, renovação, força)
 
 2. **ESCOLHA UM VERSÍCULO BÍBLICO** que se conecte PERFEITAMENTE com o tema do título:
-   - Se o título fala sobre DESÂNIMO ou CANSAÇO → use Lamentações 3:22-23 ou Isaías 40:31
-   - Se o título fala sobre MEDO ou ANSIEDADE → use Isaías 41:10 ou Filipenses 4:6-7
-   - Se o título fala sobre PROTEÇÃO → use Salmo 91 ou Salmo 121
-   - Se o título fala sobre GRATIDÃO ou MANHÃ → use Salmo 118:24 ou Lamentações 3:22-23
-   - Se o título fala sobre SOLIDÃO → use Deuteronômio 31:8 ou Romanos 8:38-39
-   - Se o título fala sobre FORÇA → use Isaías 40:31 ou Filipenses 4:13
+   - DESÂNIMO ou CANSAÇO → Lamentações 3:22-23 ou Isaías 40:31
+   - MEDO ou ANSIEDADE → Isaías 41:10 ou Filipenses 4:6-7
+   - PROTEÇÃO → Salmo 91 ou Salmo 121
+   - GRATIDÃO ou MANHÃ → Salmo 118:24 ou Lamentações 3:22-23
+   - SOLIDÃO → Deuteronômio 31:8 ou Romanos 8:38-39
+   - FORÇA → Isaías 40:31 ou Filipenses 4:13
 
-3. **ESCREVA O VERSÍCULO COMPLETO** (texto + referência) — NÃO use placeholders como {{VERSICULO}}.
-   - Exemplo: "Lamentações 3:22-23 - As misericórdias do Senhor são a causa de não sermos consumidos, pois as suas misericórdias não têm fim; renovam-se cada manhã. Grande é a tua fidelidade."
-   - Exemplo: "Isaías 41:10 - Não temas, porque eu sou contigo; não te assombres, porque eu sou o teu Deus; eu te fortaleço, e te ajudo, e te sustento com a minha destra fiel."
+3. **DECORE O VERSÍCULO ESCOLHIDO** — você vai escrevê-lo COMPLETO no Bloco 3 e no Bloco 6.
 
-4. **DEFINA O GANCHO** com base na dor identificada:
-   - Medo/Ansiedade → Gancho Físico/Sensorial: "Você acordou com o coração apertado?"
-   - Desânimo/Cansaço → Gancho de Acolhimento: "Você já sentiu que as forças do corpo acordaram antes do coração?"
-   - Gratidão/Manhã → Gancho de Agradecimento: "Querido Pai Celestial, eu te agradeço por me dares este dia."
-   - Proteção → Gancho de Declaração: "Que a proteção de Deus esteja sobre sua casa hoje."
+4. **DEFINA O GANCHO** com base na dor identificada.
 
-5. **ESCOLHA A PALAVRA-CHAVE CENTRAL** (para repetição suave):
-   - Escolha uma palavra do título ou da dor (ex: "renovação", "paz", "proteção", "força").
-   - Repita-a naturalmente ao longo do roteiro, pelo menos 5 vezes.
+5. **ESCOLHA A PALAVRA-CHAVE CENTRAL** (para repetição suave).
 
-**IMPORTANTE:** Esta análise é estritamente interna. NUNCA a exponha na resposta. Use-a apenas para guiar suas escolhas.
+**IMPORTANTE:** Esta análise é estritamente interna. NUNCA a exponha na resposta.
 
 ════════════════════════════════════════════════
 📏 QUANTIDADE DE PALAVRAS DESTE ROTEIRO
 ════════════════════════════════════════════════
 
 Escreva o roteiro com aproximadamente <<PALAVRAS_ALVO>> palavras no total.
-Faixa aceitável: entre <<PALAVRAS_MIN>> e <<PALAVRAS_MAX>> palavras. Nunca entregue um roteiro abaixo do mínimo.
-(Baseado em ~<<MINUTOS>> minutos de narração, a uma média de <<PPM>> palavras por minuto.)
+Faixa aceitável: entre <<PALAVRAS_MIN>> e <<PALAVRAS_MAX>> palavras.
 
 ════════════════════════════════════════════════
-🔁 VARIAÇÃO ESTRUTURAL DESTE ROTEIRO (gerado automaticamente — siga rigorosamente)
+🔁 VARIAÇÃO ESTRUTURAL DESTE ROTEIRO (siga rigorosamente)
 ════════════════════════════════════════════════
-
-Estes valores substituem quaisquer valores fixos usados em roteiros anteriores. Use exatamente estes parâmetros neste roteiro:
 
 → Perguntas retóricas (total mínimo): <<PERGUNTAS_MIN>>
 → Momentos de consolo/declarações de paz: <<HUMOR_MIN>>
-→ Limite de repetições consecutivas de qualquer estrutura/frase/sujeito: <<LIMITE_ANAFORA>>
-→ Distribuição de palavras por bloco (% do total de <<PALAVRAS_ALVO>> palavras definido acima):
+→ Limite de repetições consecutivas: <<LIMITE_ANAFORA>>
+→ Distribuição de palavras por bloco:
    B1 — Gancho → <<B1>>% (~<<PALAVRAS_B1>> palavras)
    B2 — Acolhimento → <<B2>>% (~<<PALAVRAS_B2>> palavras)
-   B3 — Oração Principal → <<B3>>% (~<<PALAVRAS_B3>> palavras) → **COLOQUE AQUI O VERSÍCULO COMPLETO**
+   B3 — Oração Principal → <<B3>>% (~<<PALAVRAS_B3>> palavras)
    B4 — Virada → <<B4>>% (~<<PALAVRAS_B4>> palavras)
    B5 — Tensão Honesta → <<B5>>% (~<<PALAVRAS_B5>> palavras)
-   B6 — Promessa → <<B6>>% (~<<PALAVRAS_B6>> palavras) → **COLOQUE AQUI O VERSÍCULO COMPLETO**
+   B6 — Promessa → <<B6>>% (~<<PALAVRAS_B6>> palavras)
    B7 — Encerramento → <<B7>>% (~<<PALAVRAS_B7>> palavras)
 
-NÃO REUTILIZE estes exemplos de dores ou situações (já usados em roteiros recentes deste canal):
-<<ARQUETIPOS_EVITAR>>
-
-NÃO REUTILIZE estes versículos ou salmos (já usados em roteiros recentes deste canal):
-<<CASOS_EVITAR>>
-
-Se for usar um versículo ou uma situação de dor específica, prefira algo fora dessas duas listas.
+NÃO REUTILIZE estes exemplos: <<ARQUETIPOS_EVITAR>>
+NÃO REUTILIZE estes versículos: <<CASOS_EVITAR>>
 
 ════════════════════════════════════════════════
 🧱 ESTRUTURA NARRATIVA — 7 BLOCOS (obrigatória)
 ════════════════════════════════════════════════
 
-BLOCO 1 — GANCHO (de acordo com a análise feita na Etapa 0)
-BLOCO 2 — ACOLHIMENTO E VALIDAÇÃO DA DOR
-BLOCO 3 — ORAÇÃO PRINCIPAL (com o VERSÍCULO COMPLETO escolhido)
-BLOCO 4 — VIRADA / PARADOXO BÍBLICO
-BLOCO 5 — TENSÃO HONESTA
-BLOCO 6 — PROMESSA / REVELAÇÃO BÍBLICA (com o VERSÍCULO COMPLETO escolhido)
-BLOCO 7 — ENCERRAMENTO E BÊNÇÃO FINAL
-
-════════════════════════════════════════════════
 BLOCO 1 — GANCHO
-════════════════════════════════════════════════
-
 Use o gancho definido na Etapa 0.
 - Segunda pessoa, tempo presente, detalhes sensoriais.
-- Primeira frase: máximo 8 palavras. Curta, impactante, direta.
+- Primeira frase: máximo 8 palavras.
 - Inclua 1 pergunta retórica.
 
-════════════════════════════════════════════════
 BLOCO 2 — ACOLHIMENTO E VALIDAÇÃO DA DOR
-════════════════════════════════════════════════
+- Valide a luta do espectador.
+- 1 momento de consolo.
+- 1 pergunta retórica.
 
-Valide a luta ou incerteza do espectador.
-Use frases como:
-- "Talvez você esteja carregando um peso que ninguém vê."
-- "Deus sabe de cada lágrima, cada preocupação, cada noite em claro."
+BLOCO 3 — ORAÇÃO PRINCIPAL
+**AQUI VOCÊ DEVE ESCREVER O VERSÍCULO COMPLETO (TEXTO + REFERÊNCIA) QUE ESCOLHEU NA ETAPA 0.**
+**NÃO USE {{VERSICULO}}. ESCREVA O TEXTO REAL. EXEMPLO: "Isaías 40:31 - Os que esperam no Senhor renovam as suas forças."**
+A oração deve incluir: Chamada a Deus, Reconhecimento da necessidade, O VERSÍCULO COMPLETO, Declaração de fé, Entrega.
 
-Inclua:
-- 1 momento de consolo ("Você não está sozinho nessa.")
-- 1 pergunta retórica que gere reflexão.
-
-════════════════════════════════════════════════
-BLOCO 3 — ORAÇÃO PRINCIPAL (COM VERSÍCULO COMPLETO)
-════════════════════════════════════════════════
-
-**OBRIGATÓRIO:** Escreva o VERSÍCULO COMPLETO (texto + referência) que você escolheu na Etapa 0.
-
-A oração deve incluir:
-1. Chamada a Deus ("Pai Celestial", "Senhor Jesus").
-2. Reconhecimento da necessidade.
-3. **O VERSÍCULO COMPLETO.**
-4. Declaração de fé.
-5. Entrega.
-
-════════════════════════════════════════════════
 BLOCO 4 — VIRADA / PARADOXO BÍBLICO
-════════════════════════════════════════════════
-
-Inverta a interpretação comum do mundo.
-Estrutura: "O mundo diz X, mas a Palavra de Deus diz Y."
-Inclua 1 pergunta retórica.
-
-════════════════════════════════════════════════
-BLOCO 5 — TENSÃO HONESTA
-════════════════════════════════════════════════
-
-Admita que a vida é difícil e que a luta é real.
-- "Sei que as tempestades vêm. Sei que há dias em que parece que tudo vai desmoronar."
+- "O mundo diz X, mas a Palavra de Deus diz Y."
 - Inclua 1 pergunta retórica.
 
-════════════════════════════════════════════════
-BLOCO 6 — PROMESSA / REVELAÇÃO BÍBLICA (COM VERSÍCULO COMPLETO)
-════════════════════════════════════════════════
+BLOCO 5 — TENSÃO HONESTA
+- Admita que a vida é difícil.
+- Inclua 1 pergunta retórica.
 
-**OBRIGATÓRIO:** Escreva o VERSÍCULO COMPLETO (texto + referência) que você escolheu na Etapa 0.
+BLOCO 6 — PROMESSA / REVELAÇÃO BÍBLICA
+**AQUI VOCÊ DEVE ESCREVER O VERSÍCULO COMPLETO (TEXTO + REFERÊNCIA) QUE ESCOLHEU NA ETAPA 0.**
+**NÃO USE {{VERSICULO}}. ESCREVA O TEXTO REAL. EXEMPLO: "Isaías 40:31 - Os que esperam no Senhor renovam as suas forças."**
+Escalone a promessa: da situação → caráter de Deus → paz eterna.
 
-Escalone a promessa:
-- Da situação específica → para o caráter de Deus → para a certeza da salvação → para a paz eterna.
-
-════════════════════════════════════════════════
 BLOCO 7 — ENCERRAMENTO E BÊNÇÃO FINAL
-════════════════════════════════════════════════
-
-Retorne ao gancho inicial (fechando o ciclo).
-Termine com uma bênção ou declaração de paz.
-Tom mais lento, pausado, contemplativo.
-NUNCA use CTA.
+- Retorne ao gancho inicial.
+- Termine com uma bênção.
+- NUNCA use CTA.
 
 ════════════════════════════════════════════════
 😌 MOMENTOS DE CONSOLO E REPETIÇÃO SUAVE
 ════════════════════════════════════════════════
 
-Distribua os momentos de consolo (<<HUMOR_MIN>>) ao longo do roteiro.
-Use repetição suave da palavra-chave central (definida na Etapa 0) — repita-a no mínimo 5 vezes.
+Distribua <<HUMOR_MIN>> momentos de consolo ao longo do roteiro.
+Repita a palavra-chave central (definida na Etapa 0) no mínimo 5 vezes.
 
 ════════════════════════════════════════════════
 🚫 PROIBIÇÕES ABSOLUTAS
 ════════════════════════════════════════════════
 
-NUNCA:
-- Criar listas, subtítulos, emojis
-- Usar CTA (call to action)
-- Pedir like, inscrição, comentário
-- Dizer "fique até o final"
-- Mencionar retenção, algoritmo ou YouTube
-- Usar linguagem de guerra espiritual agressiva
-- Incluir referências a: Anticristo, CERN, política, guerras, profecias apocalípticas
+NUNCA: Criar listas, usar CTA, mencionar algoritmo, usar guerra espiritual agressiva, incluir política/profecias.
 
 ════════════════════════════════════════════════
 🎙️ FORMATAÇÃO PARA NARRAÇÃO (TTS)
 ════════════════════════════════════════════════
 
-- Texto corrido, sem títulos internos, sem marcação de blocos.
-- Máximo 3 frases por parágrafo.
-- Quebra simples entre parágrafos.
+Texto corrido, sem marcação de blocos, máximo 3 frases por parágrafo.
 
 ════════════════════════════════════════════════
 ✅ VERIFICAÇÃO FINAL (antes de entregar)
 ════════════════════════════════════════════════
 
 Confirme que o texto final contém:
-- Pelo menos 2 versículos COMPLETOS (com referência e texto, NÃO use placeholders)
-- Pelo menos <<PERGUNTAS_MIN>> perguntas retóricas
-- Pelo menos <<HUMOR_MIN>> momentos de consolo
+- 2 versículos COMPLETOS com referência (NÃO use placeholders)
+- <<PERGUNTAS_MIN>> perguntas retóricas
+- <<HUMOR_MIN>> momentos de consolo
 - Nenhum parágrafo com mais de 3 frases
 - Tom acolhedor e compassivo
 
@@ -241,11 +173,8 @@ Confirme que o texto final contém:
 📤 SAÍDA FINAL
 ════════════════════════════════════════════════
 
-Entregue apenas o roteiro final pronto para narração.
-Nenhuma explicação, comentário, observação, análise, cabeçalho ou marcação estrutural.
-
-O roteiro deve começar com a oração ou declaração já em andamento.
-Termine com "Amém" ou uma bênção final.
+Entregue apenas o roteiro final. Nenhuma explicação.
+Comece com a oração já em andamento. Termine com "Amém".
 
 Agora, escreva o roteiro para o título: "<<TITULO>>"`;
 
