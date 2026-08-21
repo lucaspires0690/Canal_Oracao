@@ -1,292 +1,582 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Faith Prompt Engine — Canais de Oração</title>
-    
-    <!-- Feather Icons -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Autopost Dashboard</title>
     <script src="https://unpkg.com/feather-icons"></script>
-    
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
-    
-    <link rel="stylesheet" href="style.css" />
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.2/papaparse.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --cor-fundo: #0f1419;
+            --cor-fundo-secundario: #161d27;
+            --cor-sidebar: #1c2938;
+            --cor-borda: #2d3748;
+            --cor-texto-primario: #e1e8ed;
+            --cor-texto-secundario: #9ca3af;
+            --cor-azul: #3b82f6;
+            --cor-azul-hover: #2563eb;
+            --cor-verde: #10b981;
+            --cor-verde-hover: #059669;
+            --cor-amarelo: #f59e0b;
+            --cor-amarelo-hover: #d97706;
+            --cor-vermelho: #ef4444;
+        }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif; 
+            background: var(--cor-fundo); 
+            min-height: 100vh; 
+            color: var(--cor-texto-primario); 
+            font-size: 14px;
+        }
+        
+        /* LOGIN */
+        .login-container { display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; background: var(--cor-fundo); }
+        .login-box { 
+            background: var(--cor-sidebar); 
+            padding: 32px; 
+            border-radius: 10px; 
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5); 
+            width: 100%; 
+            max-width: 380px; 
+            border: 1px solid var(--cor-borda); 
+        }
+        .login-box h1 { margin-bottom: 24px; text-align: center; font-size: 22px; }
+        
+        /* FORMS */
+        .form-group { margin-bottom: 16px; }
+        .form-group label { 
+            display: block; 
+            margin-bottom: 6px; 
+            color: var(--cor-texto-secundario); 
+            font-weight: 500; 
+            font-size: 13px;
+        }
+        .form-group input, .form-group select, .form-group textarea { 
+            width: 100%; 
+            padding: 10px 12px; 
+            border: 1px solid #374151; 
+            border-radius: 6px; 
+            font-size: 14px; 
+            background: #1f2937; 
+            color: var(--cor-texto-primario); 
+        }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: var(--cor-azul); }
+        
+        /* BOTÕES */
+        .btn { 
+            padding: 10px 16px; 
+            background: var(--cor-azul); 
+            color: white; 
+            border: none; 
+            border-radius: 6px; 
+            font-size: 14px; 
+            font-weight: 600; 
+            cursor: pointer; 
+            transition: all 0.3s; 
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn:hover { background: var(--cor-azul-hover); transform: translateY(-1px); }
+        .btn-secondary { 
+            background: var(--cor-verde); 
+            padding: 10px 16px; 
+            display: inline-flex; 
+            align-items: center; 
+            gap: 8px; 
+            width: auto; 
+            text-decoration: none; 
+            font-size: 14px;
+        }
+        .btn-secondary:hover { background: var(--cor-verde-hover); }
+        .btn-warning { 
+            background: var(--cor-amarelo); 
+            padding: 10px 16px; 
+            display: inline-flex; 
+            align-items: center; 
+            gap: 8px; 
+            width: auto; 
+            font-size: 14px;
+        }
+        .btn-warning:hover { background: var(--cor-amarelo-hover); }
+        .btn.btn-danger { 
+            background: var(--cor-vermelho); 
+        }
+        .btn.btn-danger:hover { 
+            background: #dc2626; 
+        }
+        .btn-icon { 
+            background: none; 
+            border: none; 
+            padding: 6px; 
+            cursor: pointer; 
+            border-radius: 4px; 
+            transition: background 0.3s; 
+            color: var(--cor-texto-secundario); 
+        }
+        .btn-icon:hover { background: var(--cor-borda); color: var(--cor-texto-primario); }
+        .btn-danger:hover { background: var(--cor-vermelho); color: #fca5a5; }
+        
+        .error-message { color: var(--cor-vermelho); font-size: 13px; margin-top: 10px; text-align: center; }
+        
+        /* CONTAINER PRINCIPAL */
+        .container { display: flex; height: 100vh; background: var(--cor-fundo); }
+        
+        /* SIDEBAR */
+        .sidebar { 
+            width: 240px; 
+            background: var(--cor-sidebar); 
+            padding: 16px; 
+            box-shadow: 2px 0 10px rgba(0,0,0,0.3); 
+            border-right: 1px solid var(--cor-borda); 
+            display: flex; 
+            flex-direction: column; 
+        }
+        .sidebar-header { margin-bottom: 24px; }
+        .sidebar-header h2 { font-size: 20px; }
+        .sidebar-nav { list-style: none; }
+        .nav-item { 
+            padding: 10px 12px; 
+            margin-bottom: 6px; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            display: flex; 
+            align-items: center; 
+            gap: 10px; 
+            color: var(--cor-texto-secundario); 
+            transition: all 0.3s; 
+            font-size: 14px;
+        }
+        .nav-item:hover { background: var(--cor-borda); color: var(--cor-texto-primario); }
+        .nav-item.active { background: var(--cor-azul); color: white; }
+        .nav-item svg { width: 18px; height: 18px; }
+        .sidebar-footer { margin-top: auto; padding-top: 16px; border-top: 1px solid var(--cor-borda); }
+        
+        /* MAIN CONTENT */
+        .main-content { flex: 1; padding: 20px; overflow-y: auto; background: var(--cor-fundo-secundario); }
+        .page { display: none; }
+        .page.active { display: block; }
+        
+        /* PAGE HEADER */
+        .page-header { 
+            display: flex; 
+            align-items: center; 
+            gap: 12px; 
+            margin-bottom: 20px; 
+        }
+        .page-header h1 { font-size: 24px; font-weight: 600; }
+        
+        /* CARDS */
+        .card { 
+            background: var(--cor-sidebar); 
+            padding: 20px; 
+            border-radius: 10px; 
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3); 
+            margin-bottom: 16px; 
+            border: 1px solid var(--cor-borda); 
+        }
+        .card-header { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            margin-bottom: 16px; 
+        }
+        .card-header h2 { font-size: 18px; font-weight: 600; }
+        
+        /* TABELAS */
+        table { width: 100%; border-collapse: collapse; font-size: 14px; }
+        thead { background: var(--cor-borda); }
+        th, td { 
+            padding: 10px 12px; 
+            text-align: left; 
+            border-bottom: 1px solid #374151; 
+        }
+        th { 
+            font-weight: 600; 
+            color: var(--cor-texto-secundario); 
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        tbody tr:hover { background: var(--cor-borda); }
+        
+        /* STATUS BADGES */
+        .status-badge { 
+            padding: 4px 10px; 
+            border-radius: 12px; 
+            font-size: 12px; 
+            font-weight: 500; 
+            display: inline-block;
+        }
+        .status-active { background: #065f46; color: #6ee7b7; }
+        .status-unknown { background: #7f1d1d; color: #fca5a5; }
+        .status-agendado { background: #9a3412; color: #fdba74; }
+        .status-postado { background: #15803d; color: #86efac; }
+        .status-erro { background: #991b1b; color: #fca5a5; }
+        
+        /* ACTIONS */
+        .actions { display: flex; gap: 6px; }
+        
+        /* LOADING */
+        #loading-overlay { 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            background: rgba(0,0,0,0.7); 
+            display: none; 
+            justify-content: center; 
+            align-items: center; 
+            z-index: 9999; 
+        }
+        .spinner { 
+            border: 4px solid var(--cor-borda); 
+            border-top: 4px solid var(--cor-azul); 
+            border-radius: 50%; 
+            width: 40px; 
+            height: 40px; 
+            animation: spin 1s linear infinite; 
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        /* CHANNEL LAYOUT */
+        .channel-layout { display: flex; gap: 16px; }
+        .channel-sidebar { 
+            width: 180px; 
+            background: var(--cor-sidebar); 
+            padding: 12px; 
+            border-radius: 10px; 
+            height: fit-content; 
+            border: 1px solid var(--cor-borda); 
+        }
+        .channel-nav-item { 
+            display: flex; 
+            align-items: center; 
+            gap: 10px; 
+            padding: 10px 12px; 
+            border-radius: 6px; 
+            margin-bottom: 4px; 
+            text-decoration: none; 
+            color: var(--cor-texto-secundario); 
+            transition: all 0.3s; 
+            font-size: 14px;
+        }
+        .channel-nav-item svg { width: 18px; height: 18px; }
+        .channel-nav-item:hover { background: var(--cor-borda); color: var(--cor-texto-primario); }
+        .channel-nav-item.active { background: var(--cor-azul); color: white; }
+        
+        .channel-content { flex: 1; }
+        .channel-page { display: none; }
+        .channel-page.active { display: block; }
+        
+        /* SUBPAGE HEADER */
+        .subpage-header { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            margin-bottom: 16px; 
+            background: var(--cor-sidebar); 
+            padding: 16px; 
+            border-radius: 10px; 
+            border: 1px solid var(--cor-borda); 
+        }
+        .subpage-header h3 { color: var(--cor-texto-primario); font-size: 18px; font-weight: 600; }
+        
+        /* UPLOAD BUTTONS */
+        .upload-buttons { display: flex; gap: 10px; flex-wrap: wrap; }
+        
+        /* MEDIA SECTION */
+        .media-section { 
+            background: var(--cor-sidebar); 
+            padding: 16px; 
+            border-radius: 10px; 
+            margin-bottom: 16px; 
+            border: 1px solid var(--cor-borda); 
+        }
+        .media-section h4 { margin-bottom: 12px; font-size: 16px; }
+        .media-list { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); 
+            gap: 12px; 
+        }
+        .media-item { 
+            padding: 12px; 
+            background: var(--cor-borda); 
+            border-radius: 6px; 
+            border: 1px solid #374151; 
+            word-break: break-word; 
+            font-size: 13px;
+        }
+        
+        /* DIVIDER */
+        .section-divider { height: 1px; background: var(--cor-borda); margin: 24px 0; }
+        
+        /* TABS */
+        .tab-container { display: flex; border-bottom: 1px solid var(--cor-borda); margin-bottom: 16px; }
+        .tab-button { 
+            background: none; 
+            border: none; 
+            color: var(--cor-texto-secundario); 
+            padding: 10px 16px; 
+            cursor: pointer; 
+            font-size: 14px; 
+            font-weight: 500; 
+            border-bottom: 2px solid transparent; 
+            transition: all 0.2s; 
+        }
+        .tab-button:hover { color: var(--cor-texto-primario); }
+        .tab-button.active { color: var(--cor-azul); border-bottom-color: var(--cor-azul); }
+        
+        /* FORM GRID */
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .form-group.full-width { grid-column: 1 / -1; }
+        
+        /* INSTRUCTIONS */
+        .instructions { 
+            font-size: 13px; 
+            color: var(--cor-texto-secundario); 
+            margin-bottom: 12px; 
+            line-height: 1.5; 
+        }
+        
+        /* LINKS EM TABELAS */
+        table a {
+            color: var(--cor-azul);
+            text-decoration: underline;
+            font-weight: 500;
+        }
+        
+        /* ÍCONES */
+        .btn-icon svg,
+        .nav-item svg,
+        .channel-nav-item svg,
+        .btn svg,
+        .btn-secondary svg,
+        .btn-warning svg {
+            width: 18px;
+            height: 18px;
+        }
+    </style>
 </head>
 <body>
 
-    <!-- ============================================================ -->
-    <!-- TELA DE LOGIN -->
-    <!-- ============================================================ -->
-    <section id="tela-login" class="tela-login">
-        <div class="login-card">
-            <div class="login-brand">
-                <span class="badge">Faith Prompt Engine</span>
-                <h1>📖 Canais de Oração</h1>
-                <p>Acesse com sua conta Google autorizada.</p>
-            </div>
-            <button id="btn-google-login" class="btn btn-primary btn-google">
-                <svg width="20" height="20" viewBox="0 0 18 18" aria-hidden="true">
-                    <path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84c-.21 1.13-.85 2.09-1.81 2.73v2.27h2.92c1.71-1.57 2.69-3.88 2.69-6.64z"/>
-                    <path fill="#34A853" d="M9 18c2.43 0 4.47-.81 5.96-2.18l-2.92-2.27c-.81.55-1.84.87-3.04.87-2.34 0-4.32-1.58-5.03-3.71H.96v2.33C2.44 15.98 5.48 18 9 18z"/>
-                    <path fill="#FBBC05" d="M3.97 10.71c-.18-.55-.28-1.13-.28-1.71s.1-1.16.28-1.71V4.96H.96A8.997 8.997 0 0 0 0 9c0 1.45.35 2.83.96 4.04l3.01-2.33z"/>
-                    <path fill="#EA4335" d="M9 3.58c1.32 0 2.5.45 3.44 1.35l2.58-2.58C13.46.89 11.43 0 9 0 5.48 0 2.44 2.02.96 4.96l3.01 2.33C4.68 5.16 6.66 3.58 9 3.58z"/>
-                </svg>
-                Entrar com Google
-            </button>
-            <p class="erro" id="login-erro"></p>
-        </div>
-    </section>
-
-    <!-- ============================================================ -->
-    <!-- APP PRINCIPAL -->
-    <!-- ============================================================ -->
-    <section id="tela-app" class="tela-app oculto">
-        
-        <!-- TOPO -->
-        <header class="topo">
-            <div class="topo-info">
-                <span class="badge">Faith Prompt Engine</span>
-                <h1>Canais de Oração</h1>
-            </div>
-            <button id="btn-logout" class="btn btn-ghost">Sair</button>
-        </header>
-
-        <!-- ABAS (mantidas para o app.js) -->
-        <nav class="nav-aba">
-            <button class="aba ativa" data-aba="gerar">🎯 Gerar</button>
-            <button class="aba" data-aba="canais">📂 Canais</button>
-            <button class="aba" data-aba="historico">📜 Histórico</button>
-            <button class="aba" data-aba="formatar">📝 Formatar</button>
-        </nav>
-
-        <!-- ============================================================ -->
-        <!-- PAINEL: GERAR -->
-        <!-- ============================================================ -->
-        <div class="painel ativo" data-painel="gerar">
-            
-            <!-- BADGE: CANAL ATIVO -->
-            <div class="cartao" id="canal-ativo-badge">
-                <span>📌 Canal ativo:</span>
-                <strong id="canal-ativo-nome">Nenhum</strong>
-                <span class="badge-status" id="canal-ativo-momento">—</span>
-                <span class="badge-status" id="canal-ativo-idioma">—</span>
-            </div>
-
-            <!-- Canal + Título -->
-            <div class="grid-2">
-                <div class="cartao">
-                    <label for="select-canal">📌 Canal</label>
-                    <select id="select-canal">
-                        <option value="">— Carregando canais —</option>
-                    </select>
-                    <button id="btn-recarregar-canais" class="btn btn-ghost btn-sm">↻ Recarregar</button>
-                </div>
-                <div class="cartao">
-                    <label for="input-titulo">📝 Título do vídeo</label>
-                    <div class="input-group">
-                        <textarea id="input-titulo" rows="2" placeholder="Digite ou gere um título..."></textarea>
-                        <button id="btn-gerar-titulo" class="btn btn-secundario btn-sm" title="Gerar título com IA">✨</button>
-                        <button id="btn-refazer-titulo" class="btn btn-secundario btn-sm" title="Refazer título">🔄</button>
-                        <button id="btn-salvar-titulo" class="btn btn-primary btn-sm" title="Salvar título">💾 Salvar</button>
-                    </div>
-                    <div class="titulo-status">
-                        <span class="badge-status" id="badge-arquetipo">—</span>
-                        <span id="video-counter">Vídeo #0</span>
-                        <span class="badge-status" id="status-titulo-salvo" style="display:none;">✅ Salvo</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Duração -->
-            <div class="grid-2">
-                <div class="cartao">
-                    <label for="input-minutos">⏱️ Duração (min)</label>
-                    <input type="number" id="input-minutos" min="1" step="0.5" value="10" />
-                </div>
-                <div class="cartao" style="display:flex; align-items:center; justify-content:center; color:var(--texto-fraco);">
-                    <span>🔊 PPM fixo: <strong>150</strong> (padrão)</span>
-                </div>
-            </div>
-
-            <!-- Botão Gerar -->
-            <button id="btn-gerar" class="btn btn-primary btn-lg">
-                <span id="btn-gerar-texto">🚀 Gerar Prompt</span>
-                <span id="btn-gerar-spinner" class="spinner oculto">⏳</span>
-            </button>
-            <p class="status" id="status-gerar"></p>
-
-            <!-- Resultado: Prompt -->
-            <div class="cartao oculto" id="cartao-resultado">
-                <div class="cartao-header">
-                    <h2>📋 Prompt pronto</h2>
-                    <button id="btn-copiar" class="btn btn-ghost btn-sm">📄 Copiar</button>
-                </div>
-                <textarea id="resultado-prompt" readonly spellcheck="false"></textarea>
-                <details>
-                    <summary>📊 Parâmetros sorteados</summary>
-                    <pre id="parametros-detalhe"></pre>
-                </details>
-            </div>
-
-            <!-- Resultado: Revisão -->
-            <div class="cartao oculto" id="cartao-revisao">
-                <div class="cartao-header">
-                    <h2>🔁 Mensagem de revisão</h2>
-                    <button id="btn-copiar-revisao" class="btn btn-ghost btn-sm">📄 Copiar</button>
-                </div>
-                <textarea id="resultado-revisao" readonly spellcheck="false"></textarea>
-            </div>
-
-        </div>
-
-        <!-- ============================================================ -->
-        <!-- PAINEL: CANAIS -->
-        <!-- ============================================================ -->
-        <div class="painel" data-painel="canais">
-            
-            <!-- Criar canal -->
-            <div class="cartao">
-                <h2>➕ Novo canal</h2>
-                <div class="grid-2">
-                    <div class="campo">
-                        <label for="input-nome-canal">Nome do canal</label>
-                        <input type="text" id="input-nome-canal" placeholder="Ex.: Paz na Madrugada" />
-                    </div>
-                    <div class="campo">
-                        <label for="select-momento-canal">Momento</label>
-                        <select id="select-momento-canal">
-                            <option value="manha_disposicao">🌅 Manhã</option>
-                            <option value="madrugada_ansiedade">🌙 Madrugada</option>
-                            <option value="noite_sono">🌙 Noite</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="grid-2">
-                    <div class="campo">
-                        <label for="select-idioma-canal">Idioma</label>
-                        <select id="select-idioma-canal">
-                            <option value="pt-BR">🇧🇷 Português</option>
-                            <option value="en-US">🇺🇸 Inglês</option>
-                            <option value="es-LA">🇪🇸 Espanhol</option>
-                            <option value="fr">🇫🇷 Francês</option>
-                            <option value="ko">🇰🇷 Coreano</option>
-                        </select>
-                    </div>
-                    <div class="campo">
-                        <label for="input-url-canal">🔗 URL do YouTube</label>
-                        <input type="url" id="input-url-canal" placeholder="https://youtube.com/@meucanal" />
-                    </div>
-                </div>
-                <div class="grid-2">
-                    <div class="campo" style="display:flex; align-items:flex-end;">
-                        <button id="btn-criar-canal" class="btn btn-primary" style="width:100%;">
-                            <span id="btn-criar-texto">Criar canal</span>
-                            <span id="btn-criar-spinner" class="spinner oculto">⏳</span>
-                        </button>
-                    </div>
-                    <div class="campo" style="display:flex; align-items:flex-end;">
-                        <button id="btn-cancelar-edicao" class="btn btn-ghost oculto" style="width:100%;">Cancelar edição</button>
-                    </div>
-                </div>
-                <p class="status" id="status-canal"></p>
-            </div>
-
-            <!-- Lista de canais -->
-            <div class="cartao">
-                <div class="cartao-header">
-                    <h2>📁 Meus canais</h2>
-                </div>
-                <div id="lista-canais" class="lista-canais"></div>
-            </div>
-
-        </div>
-
-        <!-- ============================================================ -->
-        <!-- PAINEL: HISTÓRICO -->
-        <!-- ============================================================ -->
-        <div class="painel" data-painel="historico">
-            <div class="cartao">
-                <div class="cartao-header">
-                    <h2>📜 Histórico do canal</h2>
-                    <button id="btn-recarregar-historico" class="btn btn-ghost btn-sm">↻ Recarregar</button>
-                </div>
-                <div id="lista-historico" class="lista-historico"></div>
-                <button id="btn-mais-historico" class="btn btn-secundario btn-sm oculto">Carregar mais</button>
-            </div>
-        </div>
-
-        <!-- ============================================================ -->
-        <!-- PAINEL: FORMATAR -->
-        <!-- ============================================================ -->
-        <div class="painel" data-painel="formatar">
-            <div class="cartao">
-                <h2>📝 FORMATAR ROTEIRO GERADO</h2>
-                <p class="dica">Cole o roteiro final para quebrar parágrafos com mais de 3 frases.</p>
-                <textarea id="entrada-formatar" placeholder="Cole o roteiro completo aqui..." spellcheck="false"></textarea>
-                <button id="btn-formatar" class="btn btn-primary">📝 FORMATAR ROTEIRO GERADO</button>
-                <p class="status" id="status-formatar"></p>
-            </div>
-            <div class="cartao oculto" id="cartao-formatado">
-                <div class="cartao-header">
-                    <h2>✅ Resultado formatado</h2>
-                    <span id="contagem-palavras" style="color:var(--texto-fraco);font-size:0.85rem;"></span>
-                    <button id="btn-copiar-formatado" class="btn btn-ghost btn-sm">📄 Copiar</button>
-                </div>
-                <textarea id="resultado-formatado" readonly spellcheck="false"></textarea>
-            </div>
-        </div>
-
-    </section>
-
-    <!-- ============================================================ -->
-    <!-- MODAL DE EDIÇÃO DE CANAL -->
-    <!-- ============================================================ -->
-    <div id="modal-editar-canal" class="modal oculto">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>✏️ Editar canal</h2>
-                <button id="btn-fechar-modal" class="btn btn-ghost btn-sm">✕</button>
-            </div>
-            <div class="modal-body">
-                <input type="hidden" id="edit-canal-id" />
-                <div class="campo">
-                    <label for="edit-nome-canal">Nome do canal</label>
-                    <input type="text" id="edit-nome-canal" />
-                </div>
-                <div class="campo">
-                    <label for="edit-momento-canal">Momento</label>
-                    <select id="edit-momento-canal">
-                        <option value="manha_disposicao">🌅 Manhã</option>
-                        <option value="madrugada_ansiedade">🌙 Madrugada</option>
-                        <option value="noite_sono">🌙 Noite</option>
-                    </select>
-                </div>
-                <div class="campo">
-                    <label for="edit-idioma-canal">Idioma</label>
-                    <select id="edit-idioma-canal">
-                        <option value="pt-BR">🇧🇷 Português</option>
-                        <option value="en-US">🇺🇸 Inglês</option>
-                        <option value="es-LA">🇪🇸 Espanhol</option>
-                        <option value="fr">🇫🇷 Francês</option>
-                        <option value="ko">🇰🇷 Coreano</option>
-                    </select>
-                </div>
-                <div class="campo">
-                    <label for="edit-url-canal">🔗 URL do YouTube</label>
-                    <input type="url" id="edit-url-canal" placeholder="https://youtube.com/@meucanal" />
-                </div>
-                <button id="btn-salvar-edicao" class="btn btn-primary">💾 Salvar alterações</button>
-                <p class="status" id="status-edicao"></p>
-            </div>
+    <div id="login-page" class="login-container">
+        <div class="login-box">
+            <h1>🚀 Autopost</h1>
+            <form id="login-form">
+                <div class="form-group"><label for="login-email">E-mail</label><input type="email" id="login-email" required></div>
+                <div class="form-group"><label for="login-password">Senha</label><input type="password" id="login-password" required></div>
+                <button type="submit" class="btn">Entrar</button>
+                <div id="login-error-message" class="error-message"></div>
+            </form>
         </div>
     </div>
 
-    <!-- ============================================================ -->
-    <!-- SCRIPTS -->
-    <!-- ============================================================ -->
-    <script type="module" src="app.js"></script>
+    <div class="container" style="display: none;">
+        <aside class="sidebar">
+            <div class="sidebar-header"><h2>Autopost</h2></div>
+            <ul class="sidebar-nav">
+                <li class="nav-item active" data-page="dashboard"><i data-feather="home"></i><span>Dashboard</span></li>
+                <li class="nav-item" data-page="settings"><i data-feather="settings"></i><span>Configurações</span></li>
+            </ul>
+            <div class="sidebar-footer"><button id="btn-logout" class="btn btn-secondary"><i data-feather="log-out"></i><span>Sair</span></button></div>
+        </aside>
+
+        <main class="main-content">
+            <div id="dashboard-page" class="page active">
+                <div class="page-header"><h1>Meus Canais</h1></div>
+                <div class="card">
+                    <div class="card-header">
+                        <h2>Canais Vinculados</h2>
+                        <a id="btn-add-channel" href="auth.html" class="btn btn-secondary"><i data-feather="plus"></i><span>Adicionar Canal</span></a>
+                    </div>
+                    <table id="channels-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Nome do Canal</th>
+                                <th>URL</th>
+                                <th>Status</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="channels-table-body">
+                            <tr><td colspan="5">Carregando canais...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="channel-management-page" class="page">
+                <div class="page-header">
+                    <button id="btn-back-to-dashboard" class="btn-icon" title="Voltar"><i data-feather="arrow-left"></i></button>
+                    <h1 id="channel-management-title">Gerenciando Canal</h1>
+                </div>
+                <div class="channel-layout">
+                    <aside class="channel-sidebar">
+                        <nav>
+                            <a href="#" class="channel-nav-item active" data-subpage="biblioteca"><i data-feather="folder"></i><span>Biblioteca</span></a>
+                            <a href="#" class="channel-nav-item" data-subpage="agendamento"><i data-feather="calendar"></i><span>Agendamento</span></a>
+                        </nav>
+                    </aside>
+                    <div class="channel-content">
+                        
+                        <div id="biblioteca-subpage" class="channel-page active">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h2>Biblioteca de Mídia</h2>
+                                    <div class="upload-buttons">
+                                        <label for="video-upload" class="btn btn-secondary">
+                                            <i data-feather="video"></i>
+                                            <span>Upload de Vídeos</span>
+                                        </label>
+                                        <input type="file" id="video-upload" accept="video/mp4,video/quicktime" multiple style="display: none;">
+
+                                        <label for="thumbnail-upload" class="btn btn-warning">
+                                            <i data-feather="image"></i>
+                                            <span>Upload de Thumbnails</span>
+                                        </label>
+                                        <input type="file" id="thumbnail-upload" accept="image/jpeg,image/png" multiple style="display: none;">
+                                    </div>
+                                </div>
+
+                                <div id="upload-progress-container" style="display: none; margin-bottom: 1.5rem;">
+                                    <h4>Progresso do Upload</h4>
+                                    <div id="upload-progress-list"></div>
+                                </div>
+
+                                <div class="tab-container">
+                                    <button class="tab-button active" data-media-type="videos">Vídeos</button>
+                                    <button class="tab-button" data-media-type="thumbnails">Thumbnails</button>
+                                </div>
+
+                                <table id="media-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Nome do Arquivo</th>
+                                            <th>Status</th>
+                                            <th>Ações</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="media-table-body">
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div id="agendamento-subpage" class="channel-page">
+                            
+                            <div class="card">
+                                <div class="card-header">
+                                    <h2>Agendamento em Massa</h2>
+                                </div>
+                                <p class="instructions">
+                                    Faça o upload de uma planilha (.csv) para agendar múltiplos vídeos de uma só vez. Os nomes dos arquivos em 'nome_video' e 'nome_thumbnail' devem corresponder exatamente aos arquivos na sua Biblioteca de Mídia.
+                                </p>
+                                <div class="upload-buttons">
+                                    <button id="btn-download-modelo" class="btn btn-secondary"><i data-feather="download"></i><span>Baixar Modelo</span></button>
+                                    <label for="upload-planilha" class="btn btn-warning">
+                                        <i data-feather="upload"></i>
+                                        <span>Upload de Planilha</span>
+                                    </label>
+                                    <input type="file" id="upload-planilha" accept=".csv" style="display: none;">
+                                </div>
+                                <div id="massa-feedback" style="margin-top: 15px;"></div>
+                            </div>
+
+                            <div class="section-divider"></div>
+
+                            <div class="card">
+                                <div class="card-header">
+                                    <h2>Agendamento Individual</h2>
+                                    <button id="btn-toggle-form-individual" class="btn btn-secondary"><i data-feather="plus"></i><span>Agendar Manualmente</span></button>
+                                </div>
+
+                                <div id="container-form-individual" style="display: none; margin-top: 20px;">
+                                    <div class="card-header" style="margin-bottom: 10px; padding: 0;">
+                                        <h3 id="form-individual-title">Novo Agendamento</h3>
+                                        <button id="btn-close-form-individual" class="btn-icon" title="Fechar"><i data-feather="x"></i></button>
+                                    </div>
+
+                                    <form id="form-agendamento-individual">
+                                        <div class="form-grid">
+                                            <div class="form-group">
+                                                <label for="select-video">Vídeo</label>
+                                                <select id="select-video" required><option value="">Selecione um vídeo...</option></select>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="select-thumbnail">Thumbnail</label>
+                                                <select id="select-thumbnail" required><option value="">Selecione uma thumbnail...</option></select>
+                                            </div>
+                                            <div class="form-group full-width">
+                                                <label for="input-titulo">Título do Vídeo</label>
+                                                <input type="text" id="input-titulo" placeholder="Título que aparecerá no YouTube" required>
+                                            </div>
+                                            <div class="form-group full-width">
+                                                <label for="textarea-descricao">Descrição</label>
+                                                <textarea id="textarea-descricao" rows="5" placeholder="Descrição do vídeo no YouTube"></textarea>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="input-data">Data da Publicação</label>
+                                                <input type="date" id="input-data" required>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="input-hora">Hora da Publicação</label>
+                                                <input type="time" id="input-hora" required>
+                                            </div>
+                                        </div>
+                                        <div style="margin-top: 20px;">
+                                            <button type="submit" id="btn-submit-form-individual" class="btn">Agendar Vídeo</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+
+                            <div class="card">
+                                <div class="card-header">
+                                    <h2>Meus Agendamentos</h2>
+                                    <button id="btn-limpar-agenda" class="btn btn-danger">
+                                        <i data-feather="trash"></i>
+                                        <span>Limpar Lista</span>
+                                    </button>
+                                </div>
+                                <table id="agendamentos-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Título</th>
+                                            <th>Data/Hora</th>
+                                            <th>Vídeo</th>
+                                            <th>Status</th>
+                                            <th>Ações</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="agendamentos-table-body">
+                                        <!-- Linhas de agendamento serão inseridas aqui -->
+                                    </tbody>
+                                </table>
+                            </div>
+
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <div id="settings-page" class="page">
+                <div class="page-header"><h1>Configurações</h1></div>
+                <div class="card"><h2>Configurações da Conta</h2><p>Em desenvolvimento...</p></div>
+            </div>
+        </main>
+    </div>
+
+    <div id="loading-overlay"><div class="spinner"></div></div>
+    <script src="script.js"></script>
 </body>
 </html>
