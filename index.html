@@ -55,7 +55,7 @@
       <button class="aba ativa" data-aba="gerar">🎯 Gerar</button>
       <button class="aba" data-aba="canais">📂 Canais</button>
       <button class="aba" data-aba="historico">📜 Histórico</button>
-      <button class="aba" data-aba="formatar">✍️ Formatar</button>
+      <button class="aba" data-aba="formatar">📝 Formatar</button>
     </nav>
 
     <!-- ============================================================ -->
@@ -63,10 +63,18 @@
     <!-- ============================================================ -->
     <div class="painel ativo" data-painel="gerar">
       
+      <!-- BADGE: CANAL ATIVO -->
+      <div class="cartao canal-ativo" id="canal-ativo-badge">
+        <span>📌 Canal ativo:</span>
+        <strong id="canal-ativo-nome">Nenhum</strong>
+        <span class="badge-status" id="canal-ativo-momento">—</span>
+        <span class="badge-status" id="canal-ativo-idioma">—</span>
+      </div>
+
       <!-- LINHA SUPERIOR: Canal + Título -->
       <div class="grid-2">
         <div class="cartao">
-          <label for="select-canal">📌 Canal</label>
+          <label for="select-canal">📌 Selecionar canal</label>
           <select id="select-canal">
             <option value="">— Carregando canais —</option>
           </select>
@@ -75,31 +83,35 @@
         <div class="cartao">
           <label for="input-titulo">📝 Título do vídeo</label>
           <div class="input-group">
-            <input type="text" id="input-titulo" placeholder="Digite ou gere um título..." />
+            <textarea id="input-titulo" rows="2" placeholder="Digite ou gere um título..."></textarea>
             <button id="btn-gerar-titulo" class="btn btn-secundario btn-sm" title="Gerar título com IA">✨</button>
             <button id="btn-refazer-titulo" class="btn btn-secundario btn-sm" title="Refazer título">🔄</button>
+            <button id="btn-salvar-titulo" class="btn btn-primary btn-sm" title="Salvar título">💾 Salvar</button>
           </div>
           <div class="titulo-status">
             <span class="badge-status" id="badge-arquetipo">—</span>
             <span id="video-counter">Vídeo #0</span>
+            <span class="badge-status" id="status-titulo-salvo" style="display:none;">✅ Salvo</span>
           </div>
         </div>
       </div>
 
-      <!-- LINHA CENTRAL: Duração + PPM -->
+      <!-- LINHA CENTRAL: Duração -->
       <div class="grid-2">
         <div class="cartao">
           <label for="input-minutos">⏱️ Duração (min)</label>
           <input type="number" id="input-minutos" min="1" step="0.5" value="10" />
         </div>
-        <div class="cartao">
-          <label for="input-ppm">🔊 Palavras/min (TTS)</label>
-          <input type="number" id="input-ppm" min="50" step="5" value="150" />
+        <div class="cartao" style="display: flex; align-items: center; justify-content: center; color: var(--texto-fraco);">
+          <span>🔊 PPM fixo: <strong>150</strong> (padrão)</span>
         </div>
       </div>
 
       <!-- BOTÃO GERAR -->
-      <button id="btn-gerar" class="btn btn-primary btn-lg">🚀 Gerar Prompt</button>
+      <button id="btn-gerar" class="btn btn-primary btn-lg">
+        <span id="btn-gerar-texto">🚀 Gerar Prompt</span>
+        <span id="btn-gerar-spinner" class="spinner oculto">⏳</span>
+      </button>
       <p class="status" id="status-gerar"></p>
 
       <!-- RESULTADO: PROMPT -->
@@ -159,8 +171,20 @@
               <option value="ko">🇰🇷 Coreano</option>
             </select>
           </div>
+          <div class="campo">
+            <label for="input-url-canal">🔗 URL do YouTube</label>
+            <input type="url" id="input-url-canal" placeholder="https://youtube.com/@meucanal" />
+          </div>
+        </div>
+        <div class="grid-2">
           <div class="campo" style="display: flex; align-items: flex-end;">
-            <button id="btn-criar-canal" class="btn btn-primary" style="width: 100%;">Criar canal</button>
+            <button id="btn-criar-canal" class="btn btn-primary" style="width: 100%;">
+              <span id="btn-criar-texto">Criar canal</span>
+              <span id="btn-criar-spinner" class="spinner oculto">⏳</span>
+            </button>
+          </div>
+          <div class="campo" style="display: flex; align-items: flex-end;">
+            <button id="btn-cancelar-edicao" class="btn btn-ghost oculto" style="width: 100%;">Cancelar edição</button>
           </div>
         </div>
         <p class="status" id="status-canal"></p>
@@ -195,15 +219,16 @@
     <!-- ============================================================ -->
     <div class="painel" data-painel="formatar">
       <div class="cartao">
-        <h2>✍️ Formatador de parágrafos</h2>
+        <h2>📝 FORMATAR ROTEIRO GERADO</h2>
         <p class="dica">Cole o roteiro final para quebrar parágrafos com mais de 3 frases.</p>
         <textarea id="entrada-formatar" placeholder="Cole o roteiro completo aqui..." spellcheck="false"></textarea>
-        <button id="btn-formatar" class="btn btn-primary">Formatar</button>
+        <button id="btn-formatar" class="btn btn-primary">📝 FORMATAR ROTEIRO GERADO</button>
         <p class="status" id="status-formatar"></p>
       </div>
       <div class="cartao oculto" id="cartao-formatado">
         <div class="cartao-header">
           <h2>✅ Resultado formatado</h2>
+          <span id="contagem-palavras" style="color: var(--texto-fraco); font-size: 0.85rem;"></span>
           <button id="btn-copiar-formatado" class="btn btn-ghost btn-sm">📄 Copiar</button>
         </div>
         <textarea id="resultado-formatado" readonly spellcheck="false"></textarea>
@@ -211,6 +236,47 @@
     </div>
 
   </section>
+</div>
+
+<!-- MODAL DE EDIÇÃO DE CANAL -->
+<div id="modal-editar-canal" class="modal oculto">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>✏️ Editar canal</h2>
+      <button id="btn-fechar-modal" class="btn btn-ghost btn-sm">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="edit-canal-id" />
+      <div class="campo">
+        <label for="edit-nome-canal">Nome do canal</label>
+        <input type="text" id="edit-nome-canal" />
+      </div>
+      <div class="campo">
+        <label for="edit-momento-canal">Momento</label>
+        <select id="edit-momento-canal">
+          <option value="manha_disposicao">🌅 Manhã</option>
+          <option value="madrugada_ansiedade">🌙 Madrugada</option>
+          <option value="noite_sono">🌙 Noite</option>
+        </select>
+      </div>
+      <div class="campo">
+        <label for="edit-idioma-canal">Idioma</label>
+        <select id="edit-idioma-canal">
+          <option value="pt-BR">🇧🇷 Português</option>
+          <option value="en-US">🇺🇸 Inglês</option>
+          <option value="es-LA">🇪🇸 Espanhol</option>
+          <option value="fr">🇫🇷 Francês</option>
+          <option value="ko">🇰🇷 Coreano</option>
+        </select>
+      </div>
+      <div class="campo">
+        <label for="edit-url-canal">🔗 URL do YouTube</label>
+        <input type="url" id="edit-url-canal" placeholder="https://youtube.com/@meucanal" />
+      </div>
+      <button id="btn-salvar-edicao" class="btn btn-primary">💾 Salvar alterações</button>
+      <p class="status" id="status-edicao"></p>
+    </div>
+  </div>
 </div>
 
 <script type="module" src="app.js"></script>
