@@ -49,7 +49,7 @@ A revelação final deve responder com uma promessa bíblica que acalma e fortal
 "<<TITULO>>"
 
 ════════════════════════════════════════════════
-🧬 ETAPA 0 — ANÁLISE DO TÍTULO E ESCOLHA DO VERSÍCULO
+🧬 ETAPA 0 — ANÁLISE DO TÍTULO, ESCOLHA DO VERSÍCULO E DEFINIÇÃO DA LINHA DO TEMPO
 ════════════════════════════════════════════════
 
 **ANTES DE ESCREVER QUALQUER COISA, você DEVE executar esta análise silenciosamente:**
@@ -72,6 +72,23 @@ A revelação final deve responder com uma promessa bíblica que acalma e fortal
 4. **DEFINA O GANCHO** com base na dor identificada.
 
 5. **ESCOLHA A PALAVRA-CHAVE CENTRAL** (para repetição suave).
+
+6. **DEFINA A LINHA DO TEMPO E O VOCABULÁRIO** com base no momento do canal (identificado na Etapa 1):
+   - **MANHÃ**:
+     - Foco no PRESENTE ("agora", "hoje", "neste despertar") e FUTURO ("este dia", "amanhã").
+     - PASSADO permitido apenas como contexto ("ontem", "noite passada").
+     - Bênção final: "Tenha um dia abençoado", "Desperte com força", "Vá em paz e confie".
+     - PROIBIDO: "Durma bem", "Descanse esta noite", "Boa noite".
+   - **NOITE**:
+     - Foco no PRESENTE ("agora", "ao deitar", "neste momento") e FUTURO ("durante a noite", "amanhã").
+     - PASSADO permitido como contexto ("hoje", "neste dia que passou").
+     - Bênção final: "Durma em paz", "Descanse sob a proteção de Deus", "Boa noite".
+     - PROIBIDO: "Tenha um bom dia", "Desperte com energia", "Bom dia".
+   - **MADRUGADA**:
+     - Foco no PRESENTE ("agora", "neste momento", "neste silêncio").
+     - PASSADO permitido como contexto ("ontem", "noite passada").
+     - Bênção final: "Volte a dormir em paz", "Entregue sua ansiedade agora", "Descanse no amor de Deus".
+     - PROIBIDO: Bênçãos matinais ou noturnas que não sejam de alívio imediato.
 
 **IMPORTANTE:** Esta análise é estritamente interna. NUNCA a exponha na resposta.
 
@@ -136,7 +153,7 @@ Escalone a promessa: da situação → caráter de Deus → paz eterna.
 
 BLOCO 7 — ENCERRAMENTO E BÊNÇÃO FINAL
 - Retorne ao gancho inicial.
-- Termine com uma bênção.
+- Termine com uma bênção que respeite a LINHA DO TEMPO definida na Etapa 0.
 - NUNCA use CTA.
 
 ════════════════════════════════════════════════
@@ -168,6 +185,7 @@ Confirme que o texto final contém:
 - <<HUMOR_MIN>> momentos de consolo
 - Nenhum parágrafo com mais de 3 frases
 - Tom acolhedor e compassivo
+- A bênção final está alinhada com o MOMENTO do canal (Manhã/Noite/Madrugada)
 
 ════════════════════════════════════════════════
 📤 SAÍDA FINAL
