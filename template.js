@@ -77,14 +77,15 @@ Antes de escrever qualquer parte do roteiro, analise silenciosamente o título a
 5. **ESCOLHA O VERSÍCULO E ESCREVA-O COMPLETAMENTE**:
    - Analise o título e identifique o tema central.
    - Escolha UM versículo bíblico que seja PERFEITO para esse tema.
-   - Escreva o texto COMPLETO do versículo, com a referência.
+   - **VOCÊ DEVE ESCREVER O TEXTO COMPLETO DO VERSÍCULO, com a referência.**
    - Exemplo: "Isaías 40:31 - Os que esperam no Senhor renovam as suas forças."
-   - Exemplo: "Filipenses 4:6-7 - Não andem ansiosos por coisa alguma...".
+   - Exemplo: "Lamentações 3:22-23 - As misericórdias do Senhor são a causa de não sermos consumidos, pois as suas misericórdias não têm fim; renovam-se cada manhã. Grande é a tua fidelidade."
+   - Exemplo: "Filipenses 4:6-7 - Não andem ansiosos por coisa alguma, mas em tudo, pela oração e súplicas, e com ação de graças, apresentem seus pedidos a Deus. E a paz de Deus, que excede todo o entendimento, guardará os seus corações e as suas mentes em Cristo Jesus."
    - Use a tradução Almeida (ARC ou ARA) ou NVI.
+   - **NÃO use placeholders como {{VERSICULO}}.** Escreva o texto completo.
    - Coloque este versículo COMPLETO no Bloco 3 e no Bloco 6.
 
-Use essas decisões para guiar TODAS as escolhas do roteiro: as cenas escolhidas, os ângulos do Bloco 3, o tom geral, o tipo de revelação final e o encerramento.
-Essa análise é estritamente interna — um passo de raciocínio antes de escrever. NUNCA exponha, liste, resuma ou mencione essa análise na resposta. Vá direto para o passo abaixo.
+Use essas decisões para guiar TODAS as escolhas do roteiro. Essa análise é estritamente interna — um passo de raciocínio antes de escrever. NUNCA exponha, liste, resuma ou mencione essa análise na resposta. Vá direto para o passo abaixo.
 
 ════════════════════════════════════════════════
 📏 QUANTIDADE DE PALAVRAS DESTE ROTEIRO
@@ -126,10 +127,10 @@ Se for usar um versículo ou uma situação de dor específica, prefira algo for
 
 BLOCO 1 → GANCHO (de acordo com a árvore de decisão)
 BLOCO 2 → ACOLHIMENTO E VALIDAÇÃO DA DOR
-BLOCO 3 → ORAÇÃO PRINCIPAL E ENTREGA (inclua o VERSÍCULO COMPLETO aqui)
+BLOCO 3 → ORAÇÃO PRINCIPAL E ENTREGA (escreva o VERSÍCULO COMPLETO aqui, com a referência)
 BLOCO 4 → VIRADA / PARADOXO BÍBLICO
 BLOCO 5 → TENSÃO HONESTA (admitir a luta)
-BLOCO 6 → PROMESSA / REVELAÇÃO BÍBLICA (inclua o VERSÍCULO COMPLETO aqui)
+BLOCO 6 → PROMESSA / REVELAÇÃO BÍBLICA (escreva o VERSÍCULO COMPLETO aqui, com a referência)
 BLOCO 7 → ENCERRAMENTO E BÊNÇÃO FINAL
 
 Nenhum bloco existe isoladamente. Cada bloco empurra naturalmente para o próximo.
@@ -196,19 +197,19 @@ Inclua:
 Conecte a dor à promessa de Deus, sem pressa. Crie um ambiente de confiança.
 
 ════════════════════════════════════════════════
-BLOCO 3 — ORAÇÃO PRINCIPAL E ENTREGA
+BLOCO 3 — ORAÇÃO PRINCIPAL E ENTREGA (COM VERSÍCULO COMPLETO)
 ════════════════════════════════════════════════
 
 Este é o coração do roteiro. A oração em si.
 Deve ser:
 - Em primeira pessoa (o espectador está orando junto com o narrador).
-- Entrelaçada com o VERSÍCULO COMPLETO que você escolheu (escreva o texto completo, não apenas a referência).
+- **OBRIGATÓRIO: escreva o VERSÍCULO COMPLETO (texto + referência) que você escolheu na Etapa 0.**
 - Específica para a dor identificada (ex: se for medo, ore por paz; se for proteção, ore por cobertura; se for gratidão, ore por reconhecimento).
 
 Estrutura sugerida:
 1. Chamada a Deus ("Pai Celestial", "Senhor Jesus", "Espírito Santo").
 2. Reconhecimento da necessidade ("Eu entrego minha ansiedade em Tuas mãos...").
-3. Pedido baseado na Palavra ("Tua Palavra diz que..." — cite o versículo completo aqui).
+3. **ESCREVA O VERSÍCULO COMPLETO AQUI (com a referência).**
 4. Declaração de fé ("Eu creio que Tu estás cuidando de mim...").
 5. Entrega ("Eu deposito isso em Tuas mãos agora").
 
@@ -244,11 +245,11 @@ Não prometa que tudo vai ser fácil. Prometa que Deus estará presente.
 Inclua 1 pergunta retórica que expresse a dificuldade honestamente.
 
 ════════════════════════════════════════════════
-BLOCO 6 — PROMESSA / REVELAÇÃO BÍBLICA
+BLOCO 6 — PROMESSA / REVELAÇÃO BÍBLICA (COM VERSÍCULO COMPLETO)
 ════════════════════════════════════════════════
 
 Responda ao título com a promessa bíblica que resolve a dor.
-Use o VERSÍCULO COMPLETO que você escolheu (escreva o texto completo, não apenas a referência).
+**OBRIGATÓRIO: escreva o VERSÍCULO COMPLETO (texto + referência) que você escolheu na Etapa 0.**
 
 Escalone a promessa:
 - Da situação específica → para o caráter de Deus → para a certeza da salvação → para a paz eterna.
@@ -370,10 +371,10 @@ Se, ao terminar o Bloco 6, a soma estimada de todos os blocos ainda estiver abai
 Essa verificação é estritamente interna, feita silenciosamente entre um bloco e outro. NUNCA exponha contagens, comentários sobre isso, ou marcações como "Bloco 1 concluído" — a saída final deve ser só o roteiro corrido, sem nenhum rastro desse processo.
 
 Antes de entregar a resposta final, confirme também (sem expor isso na resposta) que o texto final realmente contém:
+- Pelo menos 2 versículos bíblicos COMPLETOS (com referência e texto, NÃO use placeholders)
 - Pelo menos <<PERGUNTAS_MIN>> perguntas retóricas
 - Pelo menos <<HUMOR_MIN>> momentos de consolo/declarações de paz
 - Pelo menos 2 testemunhos ou micro-histórias
-- Pelo menos 2 versículos bíblicos completos (com referência e texto)
 - Pelo menos 5 repetições suaves da palavra-chave central (definida na Etapa 0)
 - Nenhum parágrafo com mais de 3 frases
 - Ritmo de respiração (frases curtas e médias alternadas, conforme instruído)
