@@ -1,11 +1,534 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Faith Prompt Engine</title>
     <script src="https://unpkg.com/feather-icons"></script>
-    <link rel="stylesheet" href="style.css" />
+    <style>
+        /* ============================================================ */
+        /* CSS DO AUTOPOST — EXATAMENTE COMO VOCÊ ME ENVIOU */
+        /* ============================================================ */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        :root {
+            --cor-fundo: #0f1419;
+            --cor-fundo-secundario: #161d27;
+            --cor-sidebar: #1c2938;
+            --cor-borda: #2d3748;
+            --cor-texto-primario: #e1e8ed;
+            --cor-texto-secundario: #9ca3af;
+            --cor-azul: #3b82f6;
+            --cor-azul-hover: #2563eb;
+            --cor-verde: #10b981;
+            --cor-verde-hover: #059669;
+            --cor-amarelo: #f59e0b;
+            --cor-amarelo-hover: #d97706;
+            --cor-vermelho: #ef4444;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: var(--cor-fundo);
+            min-height: 100vh;
+            color: var(--cor-texto-primario);
+            font-size: 14px;
+        }
+
+        /* LOGIN */
+        .login-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+            background: var(--cor-fundo);
+        }
+        .login-box {
+            background: var(--cor-sidebar);
+            padding: 32px;
+            border-radius: 10px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            width: 100%;
+            max-width: 380px;
+            border: 1px solid var(--cor-borda);
+        }
+        .login-box h1 {
+            margin-bottom: 8px;
+            text-align: center;
+            font-size: 22px;
+        }
+        .login-box p {
+            text-align: center;
+            color: var(--cor-texto-secundario);
+            margin-bottom: 24px;
+            font-size: 14px;
+        }
+        .error-message {
+            color: var(--cor-vermelho);
+            font-size: 13px;
+            margin-top: 10px;
+            text-align: center;
+        }
+
+        /* FORMS */
+        .form-group {
+            margin-bottom: 16px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            color: var(--cor-texto-secundario);
+            font-weight: 500;
+            font-size: 13px;
+        }
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #374151;
+            border-radius: 6px;
+            font-size: 14px;
+            background: #1f2937;
+            color: var(--cor-texto-primario);
+        }
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--cor-azul);
+        }
+
+        /* BOTÕES */
+        .btn {
+            padding: 10px 16px;
+            background: var(--cor-azul);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn:hover {
+            background: var(--cor-azul-hover);
+            transform: translateY(-1px);
+        }
+        .btn-secondary {
+            background: var(--cor-verde);
+            padding: 10px 16px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            width: auto;
+            text-decoration: none;
+            font-size: 14px;
+        }
+        .btn-secondary:hover {
+            background: var(--cor-verde-hover);
+        }
+        .btn-warning {
+            background: var(--cor-amarelo);
+            padding: 10px 16px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            width: auto;
+            font-size: 14px;
+        }
+        .btn-warning:hover {
+            background: var(--cor-amarelo-hover);
+        }
+        .btn-danger {
+            background: var(--cor-vermelho);
+        }
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+        .btn-icon {
+            background: none;
+            border: none;
+            padding: 6px;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: background 0.3s;
+            color: var(--cor-texto-secundario);
+        }
+        .btn-icon:hover {
+            background: var(--cor-borda);
+            color: var(--cor-texto-primario);
+        }
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+        .btn-lg {
+            padding: 12px 24px;
+            font-size: 16px;
+            width: 100%;
+        }
+
+        /* CONTAINER PRINCIPAL */
+        .container {
+            display: flex;
+            height: 100vh;
+            background: var(--cor-fundo);
+        }
+
+        /* SIDEBAR */
+        .sidebar {
+            width: 240px;
+            background: var(--cor-sidebar);
+            padding: 16px;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.3);
+            border-right: 1px solid var(--cor-borda);
+            display: flex;
+            flex-direction: column;
+        }
+        .sidebar-header {
+            margin-bottom: 24px;
+        }
+        .sidebar-header h2 {
+            font-size: 20px;
+        }
+        .sidebar-nav {
+            list-style: none;
+        }
+        .nav-item {
+            padding: 10px 12px;
+            margin-bottom: 6px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--cor-texto-secundario);
+            transition: all 0.3s;
+            font-size: 14px;
+            text-decoration: none;
+        }
+        .nav-item:hover {
+            background: var(--cor-borda);
+            color: var(--cor-texto-primario);
+        }
+        .nav-item.active {
+            background: var(--cor-azul);
+            color: white;
+        }
+        .nav-item svg {
+            width: 18px;
+            height: 18px;
+        }
+        .sidebar-footer {
+            margin-top: auto;
+            padding-top: 16px;
+            border-top: 1px solid var(--cor-borda);
+        }
+
+        /* MAIN CONTENT */
+        .main-content {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background: var(--cor-fundo-secundario);
+        }
+        .page {
+            display: none;
+        }
+        .page.active {
+            display: block;
+        }
+
+        /* PAGE HEADER */
+        .page-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .page-header h1 {
+            font-size: 24px;
+            font-weight: 600;
+        }
+        .header-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--cor-sidebar);
+            padding: 6px 14px;
+            border-radius: 8px;
+            border: 1px solid var(--cor-borda);
+            font-size: 13px;
+            color: var(--cor-texto-secundario);
+        }
+        .header-badge strong {
+            color: var(--cor-texto-primario);
+        }
+        .badge-status {
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 500;
+            background: var(--cor-borda);
+            color: var(--cor-texto-secundario);
+        }
+        .badge-success {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--cor-verde);
+        }
+
+        /* CARDS */
+        .card {
+            background: var(--cor-sidebar);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            margin-bottom: 16px;
+            border: 1px solid var(--cor-borda);
+        }
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .card-header h2 {
+            font-size: 18px;
+            font-weight: 600;
+        }
+        .card-header h3 {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        /* FORM GRID */
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+        .form-group.full-width {
+            grid-column: 1 / -1;
+        }
+
+        /* STATUS */
+        .status {
+            margin-top: 8px;
+            font-size: 13px;
+            color: var(--cor-texto-secundario);
+        }
+        .status.sucesso {
+            color: var(--cor-verde);
+        }
+        .status.erro {
+            color: var(--cor-vermelho);
+        }
+        .oculto {
+            display: none !important;
+        }
+
+        /* SPINNER */
+        .spinner {
+            display: inline-block;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin {
+            from {
+                transform: rotate(0deg);
+            }
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* LISTAS */
+        #lista-canais {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .item-canal {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            background: #1f2937;
+            border: 1px solid var(--cor-borda);
+            border-radius: 6px;
+            transition: all 0.2s;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .item-canal:hover {
+            border-color: var(--cor-azul);
+        }
+        .item-canal .item-titulo {
+            font-weight: 600;
+        }
+        .item-canal .item-meta {
+            font-size: 12px;
+            color: var(--cor-texto-secundario);
+        }
+        .item-acoes {
+            display: flex;
+            gap: 4px;
+        }
+
+        #lista-historico {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .item-historico {
+            padding: 10px 14px;
+            background: #1f2937;
+            border: 1px solid var(--cor-borda);
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+        .item-historico:hover {
+            border-color: var(--cor-azul);
+        }
+        .item-historico .item-titulo {
+            font-weight: 500;
+        }
+        .item-historico .item-meta {
+            font-size: 12px;
+            color: var(--cor-texto-secundario);
+            margin-top: 2px;
+        }
+
+        /* MODAL */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background: var(--cor-sidebar);
+            padding: 24px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 500px;
+            border: 1px solid var(--cor-borda);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        .modal-header h3 {
+            font-size: 18px;
+            font-weight: 600;
+        }
+        .modal-body .form-group {
+            margin-bottom: 14px;
+        }
+
+        .text-muted {
+            color: var(--cor-texto-secundario);
+            font-size: 13px;
+        }
+        .titulo-status {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-top: 6px;
+            font-size: 13px;
+            color: var(--cor-texto-secundario);
+            flex-wrap: wrap;
+        }
+
+        /* RESPONSIVO */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 60px;
+                padding: 12px 8px;
+            }
+            .sidebar-header h2 {
+                display: none;
+            }
+            .nav-item span {
+                display: none;
+            }
+            .nav-item {
+                justify-content: center;
+                padding: 10px;
+            }
+            .sidebar-footer .btn span {
+                display: none;
+            }
+            .sidebar-footer .btn {
+                justify-content: center;
+            }
+            .main-content {
+                padding: 16px;
+            }
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+            .page-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .header-badge {
+                width: 100%;
+                justify-content: center;
+                font-size: 12px;
+            }
+            .item-canal {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .item-acoes {
+                width: 100%;
+                justify-content: flex-end;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .sidebar {
+                width: 50px;
+                padding: 8px 4px;
+            }
+            .nav-item {
+                padding: 8px;
+            }
+            .main-content {
+                padding: 12px;
+            }
+            .card {
+                padding: 14px 16px;
+            }
+            .btn {
+                font-size: 12px;
+                padding: 6px 12px;
+            }
+            .btn-lg {
+                font-size: 14px;
+                padding: 10px 16px;
+            }
+        }
+    </style>
 </head>
 <body>
 
@@ -16,7 +539,7 @@
         <div class="login-box">
             <h1>📖 Faith Engine</h1>
             <p>Acesse com sua conta Google autorizada.</p>
-            <button id="btn-google-login" class="btn btn-primary" style="width:100%; justify-content:center; gap:10px;">
+            <button id="btn-google-login" class="btn" style="width:100%; justify-content:center; gap:10px;">
                 <svg width="20" height="20" viewBox="0 0 18 18">
                     <path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84c-.21 1.13-.85 2.09-1.81 2.73v2.27h2.92c1.71-1.57 2.69-3.88 2.69-6.64z"/>
                     <path fill="#34A853" d="M9 18c2.43 0 4.47-.81 5.96-2.18l-2.92-2.27c-.81.55-1.84.87-3.04.87-2.34 0-4.32-1.58-5.03-3.71H.96v2.33C2.44 15.98 5.48 18 9 18z"/>
@@ -47,7 +570,7 @@
             </nav>
             <div class="sidebar-footer">
                 <button id="btn-logout" class="btn btn-secondary" style="width:100%; justify-content:center; gap:8px;">
-                    <i data-feather="log-out"></i> Sair
+                    <i data-feather="log-out"></i> <span>Sair</span>
                 </button>
             </div>
         </aside>
@@ -63,7 +586,7 @@
                 <div class="page-header">
                     <h1>🎯 Gerar Conteúdo</h1>
                     <div class="header-badge">
-                        📌 <strong id="canal-ativo-nome">Nenhum canal</strong>
+                        📌 <strong id="canal-ativo-nome">Nenhum</strong>
                         <span class="badge-status" id="canal-ativo-momento">—</span>
                         <span class="badge-status" id="canal-ativo-idioma">—</span>
                     </div>
@@ -106,7 +629,7 @@
                         <label for="input-minutos">⏱️ Duração (min)</label>
                         <input type="number" id="input-minutos" min="1" step="0.5" value="10" />
                     </div>
-                    <div style="color:var(--cor-texto-secundario); font-size:13px; margin-top:4px;">
+                    <div class="text-muted" style="margin-top:4px;">
                         🔊 PPM fixo: <strong>150</strong> (padrão)
                     </div>
                 </div>
@@ -124,10 +647,10 @@
                         <h3>📋 Prompt pronto</h3>
                         <button id="btn-copiar" class="btn btn-secondary btn-sm"><i data-feather="copy"></i> Copiar</button>
                     </div>
-                    <textarea id="resultado-prompt" readonly></textarea>
+                    <textarea id="resultado-prompt" readonly style="min-height:200px;"></textarea>
                     <details>
                         <summary>📊 Parâmetros sorteados</summary>
-                        <pre id="parametros-detalhe"></pre>
+                        <pre id="parametros-detalhe" style="background:#1f2937;padding:12px;border-radius:6px;margin-top:8px;font-size:12px;overflow:auto;"></pre>
                     </details>
                 </div>
 
@@ -137,7 +660,7 @@
                         <h3>🔁 Mensagem de revisão</h3>
                         <button id="btn-copiar-revisao" class="btn btn-secondary btn-sm"><i data-feather="copy"></i> Copiar</button>
                     </div>
-                    <textarea id="resultado-revisao" readonly></textarea>
+                    <textarea id="resultado-revisao" readonly style="min-height:150px;"></textarea>
                 </div>
 
             </div>
@@ -231,11 +754,11 @@
 
                 <div class="card">
                     <h3>📝 FORMATAR ROTEIRO GERADO</h3>
-                    <p class="text-muted" style="font-size:13px; color:var(--cor-texto-secundario);">
+                    <p class="text-muted" style="margin-bottom:12px;">
                         Cole o roteiro final para quebrar parágrafos com mais de 3 frases.
                     </p>
-                    <textarea id="entrada-formatar" placeholder="Cole o roteiro completo aqui..."></textarea>
-                    <button id="btn-formatar" class="btn btn-primary">
+                    <textarea id="entrada-formatar" placeholder="Cole o roteiro completo aqui..." style="min-height:150px;"></textarea>
+                    <button id="btn-formatar" class="btn btn-primary" style="margin-top:12px;">
                         <i data-feather="edit-3"></i> FORMATAR ROTEIRO GERADO
                     </button>
                     <p class="status" id="status-formatar"></p>
@@ -244,12 +767,12 @@
                 <div class="card oculto" id="cartao-formatado">
                     <div class="card-header">
                         <h3>✅ Resultado formatado</h3>
-                        <span id="contagem-palavras" style="color:var(--cor-texto-secundario); font-size:13px;"></span>
+                        <span id="contagem-palavras" class="text-muted"></span>
                         <button id="btn-copiar-formatado" class="btn btn-secondary btn-sm">
                             <i data-feather="copy"></i> Copiar
                         </button>
                     </div>
-                    <textarea id="resultado-formatado" readonly></textarea>
+                    <textarea id="resultado-formatado" readonly style="min-height:150px;"></textarea>
                 </div>
 
             </div>
