@@ -468,9 +468,6 @@ async function gerarTituloComIA(canalId, forcarNovo = false) {
     const tituloEscolhido = titulos[Math.floor(Math.random() * titulos.length)];
     const arquétipo = "IA-GPT4o";
 
-    // NÃO SALVA MAIS AUTOMATICAMENTE — só retorna o título
-    // O salvamento agora é feito pelo botão "Salvar Título"
-
     return { titulo: tituloEscolhido, arquétipo, todos: titulos };
 
   } catch (error) {
@@ -758,7 +755,6 @@ const statusTituloSalvo = document.getElementById("status-titulo-salvo");
 selectCanal.addEventListener("change", () => {
   carregarHistorico(selectCanal.value, true);
   atualizarBadgeCanalAtivo();
-  // Resetar status do título ao trocar de canal
   statusTituloSalvo.style.display = "none";
   tituloSalvoId = null;
 });
