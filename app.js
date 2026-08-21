@@ -286,7 +286,6 @@ async function gerarTituloComIA(canalId, forcarNovo = false) {
     const canal = canais.find(c => c.id === canalId);
     if (!canal) throw new Error("Canal não encontrado.");
 
-    // Buscar os dados brutos para enviar como contexto
     const contexto = {
       rawTitles: rawTitles,
       titlePatterns: titlePatterns,
@@ -302,17 +301,14 @@ async function gerarTituloComIA(canalId, forcarNovo = false) {
       contexto: JSON.stringify(contexto)
     });
 
-    // A função retorna { titulos: [...] }
     const titulos = result.data.titulos;
     if (!titulos || titulos.length === 0) {
       throw new Error("Nenhum título gerado pela IA.");
     }
 
-    // Selecionar o primeiro título da lista (ou um aleatório)
     const tituloEscolhido = titulos[Math.floor(Math.random() * titulos.length)];
     const arquétipo = "IA-GPT4o";
 
-    // Salvar como rascunho no histórico
     await addDoc(collection(db, "historico"), {
       canalId: canalId,
       titulo: tituloEscolhido,
@@ -329,13 +325,11 @@ async function gerarTituloComIA(canalId, forcarNovo = false) {
 
   } catch (error) {
     console.error("❌ Erro na API:", error);
-    
-    // Mensagens amigáveis para o usuário
     let mensagem = "Erro ao gerar títulos. ";
     if (error.message.includes("permission") || error.message.includes("auth")) {
       mensagem += "Verifique sua autenticação no Firebase.";
     } else if (error.message.includes("quota") || error.message.includes("credit")) {
-      mensagem += "Créditos da API OpenAI esgotados. Recarregue a página e tente novamente.";
+      mensagem += "Créditos da API OpenAI esgotados.";
     } else if (error.message.includes("timeout")) {
       mensagem += "A requisição demorou muito. Tente novamente.";
     } else {
@@ -346,7 +340,7 @@ async function gerarTituloComIA(canalId, forcarNovo = false) {
 }
 
 // ============================================================
-// MOTOR DE GERAÇÃO DE PROMPT (FUNÇÕES ESSENCIAIS)
+// MOTOR DE GERAÇÃO DE PROMPT
 // ============================================================
 function calcularParametrosDeDuracao(minutos, ppm) {
   const palavrasAlvo = Math.round(minutos * ppm);
@@ -381,25 +375,6 @@ function calcularPalavrasPorBloco(distribuicaoPct, palavrasAlvo) {
   return resultado;
 }
 
-function buscarVersiculo(referencia, biblia) {
-  if (!biblia) return null;
-  const padrao = /^([a-zA-ZÀ-ú]+)\s+(\d+):(\d+)(?:-(\d+))?$/;
-  const match = padrao.exec(referencia.trim());
-  if (!match) return null;
-  const [_, livroNome, capituloStr, versiculoStr, versiculoFimStr] = match;
-  const capitulo = parseInt(capituloStr);
-  const versiculo = parseInt(versiculoStr);
-  const livro = biblia.find(l => l.name.toLowerCase() === livroNome.toLowerCase());
-  if (!livro) return null;
-  if (capitulo > livro.chapters.length) return null;
-  if (versiculoFimStr) {
-    const versiculoFim = parseInt(versiculoFimStr);
-    return livro.chapters[capitulo - 1].slice(versiculo - 1, versiculoFim).join(" ");
-  } else {
-    return livro.chapters[capitulo - 1][versiculo - 1] || null;
-  }
-}
-
 function montarMensagemRevisao(params, langData) {
   const base = langData?.instructions?.revision_message || "Revise o roteiro que você acabou de escrever para este vídeo";
   return `${base}:
@@ -407,7 +382,7 @@ function montarMensagemRevisao(params, langData) {
 1. Contagem de palavras: confira se o roteiro tem entre ${params.palavrasMin} e ${params.palavrasMax} palavras.
 2. Parágrafos: nenhum parágrafo pode ter mais de 3 frases.
 3. Humor/consolo: confirme se existem pelo menos ${params.humorMin} momentos de consolo distribuídos.
-4. Versículos: confirme que os versículos sugeridos estão corretos (use {{VERSICULO}} como marcador).
+4. Versículos: confirme que os versículos sugeridos estão corretos e completos.
 5. Tom: o tom deve ser acolhedor, compassivo e nunca de acusação ou medo.
 
 Entregue apenas o roteiro corrigido e completo. Sem comentários sobre o que foi revisado.`;
@@ -443,7 +418,7 @@ Cada bloco tem um alvo de palavras. Ao terminar de escrever cada bloco, estime q
 Antes de entregar a resposta final, confirme que o texto final realmente contém:
 - Pelo menos ${params.perguntasMin} perguntas retóricas
 - Pelo menos ${params.humorMin} momentos de consolo/declarações de paz
-- Pelo menos 2 versículos bíblicos (via {{VERSICULO}})
+- Pelo menos 2 versículos bíblicos (com referência e texto completo)
 - Nenhum parágrafo com mais de 3 frases
 - Tom acolhedor e compassivo
 
@@ -599,13 +574,12 @@ const cartaoRevisao = document.getElementById("cartao-revisao");
 const resultadoRevisao = document.getElementById("resultado-revisao");
 const btnCopiarRevisao = document.getElementById("btn-copiar-revisao");
 
-// Quando o canal mudar, recarregar o histórico
 selectCanal.addEventListener("change", () => {
   carregarHistorico(selectCanal.value, true);
 });
 
 // ============================================================
-// GERAR TÍTULO VIA API (NOVO BOTÃO)
+// GERAR TÍTULO VIA API
 // ============================================================
 document.getElementById("btn-gerar-titulo").addEventListener("click", async () => {
   const canalId = selectCanal.value;
@@ -651,7 +625,6 @@ document.getElementById("btn-refazer-titulo").addEventListener("click", async ()
   btnGerar.disabled = true;
 
   try {
-    // Excluir o último rascunho
     const q = query(
       collection(db, "historico"),
       where("canalId", "==", canalId),
@@ -685,7 +658,7 @@ async function getTotalVideosCanal(canalId) {
 }
 
 // ============================================================
-// GERAR PROMPT (COM TÍTULO JÁ GERADO)
+// GERAR PROMPT
 // ============================================================
 btnGerar.addEventListener("click", async () => {
   const titulo = inputTitulo.value.trim();
@@ -708,8 +681,6 @@ btnGerar.addEventListener("click", async () => {
     const canalData = canalDoc.data();
     const momento = canalData.momento;
     const idioma = canalData.idioma;
-
-    await carregarBibliaDoStorage(idioma);
 
     const langData = traducoes.languages?.[idioma] || {};
     const momentTemplates = traducoes.moment_templates || {};
@@ -877,4 +848,4 @@ document.querySelectorAll(".aba").forEach((botao) => {
   });
 });
 
-console.log("✅ Faith Prompt Engine carregado (modo API)!");
+console.log("✅ Faith Prompt Engine carregado (modo API - otimizado)!");
