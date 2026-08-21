@@ -23,6 +23,7 @@ import {
   doc,
   getDoc,
   setDoc,
+  updateDoc,
   collection,
   addDoc,
   query,
@@ -88,17 +89,8 @@ let ultimoDocHistorico = null;
 let ultimoTituloGerado = "";
 let ultimoArquetipo = "";
 let titlePatterns = null;
-
-// ============================================================
-// PERSISTÊNCIA LOCAL (PPM)
-// ============================================================
-const inputPpm = document.getElementById("input-ppm");
-const ppmSalvo = localStorage.getItem("storyengine_ppm");
-if (ppmSalvo) inputPpm.value = ppmSalvo;
-inputPpm.addEventListener("change", () => {
-  const valor = parseFloat(inputPpm.value);
-  if (valor > 0) localStorage.setItem("storyengine_ppm", String(valor));
-});
+let canalEmEdicao = null;
+let tituloSalvoId = null;
 
 // ============================================================
 // AUTENTICAÇÃO
@@ -183,12 +175,11 @@ async function carregarBibliaDoStorage(idioma) {
 // ============================================================
 async function buscarVersiculoPorTema(tema) {
   try {
-    // Mapeamento de temas para versículos
     const mapaTemas = {
       "angústia": "Isaías 41:10 - Não temas, porque eu sou contigo; não te assombres, porque eu sou o teu Deus; eu te fortaleço, e te ajudo, e te sustento com a minha destra fiel.",
       "desânimo": "Isaías 40:31 - Os que esperam no Senhor renovam as suas forças. Sobem com asas como águias, correm e não se cansam, caminham e não se fatigam.",
       "medo": "Isaías 41:10 - Não temas, porque eu sou contigo; não te assombres, porque eu sou o teu Deus; eu te fortaleço, e te ajudo, e te sustento com a minha destra fiel.",
-      "ansiedade": "Filipenses 4:6-7 - Não andem ansiosos por coisa alguma, mas em tudo, pela oração e súplicas, e com ação de graças, apresentem seus pedidos a Deus. E a paz de God, que excede todo o entendimento, guardará os seus corações e as suas mentes em Cristo Jesus.",
+      "ansiedade": "Filipenses 4:6-7 - Não andem ansiosos por coisa alguma, mas em tudo, pela oração e súplicas, e com ação de graças, apresentem seus pedidos a Deus. E a paz de Deus, que excede todo o entendimento, guardará os seus corações e as suas mentes em Cristo Jesus.",
       "preocupação": "Filipenses 4:6-7 - Não andem ansiosos por coisa alguma...",
       "proteção": "Salmo 91:1-2 - Aquele que habita no esconderijo do Altíssimo descansa à sombra do Todo-poderoso. Direi do Senhor: 'Ele é o meu refúgio e a minha fortaleza, o meu Deus, em quem confio.'",
       "gratidão": "Salmo 118:24 - Este é o dia que o Senhor fez; regozijemo-nos e alegremo-nos nele.",
@@ -200,7 +191,6 @@ async function buscarVersiculoPorTema(tema) {
       "manhã": "Lamentações 3:22-23 - As misericórdias do Senhor são a causa de não sermos consumidos, pois as suas misericórdias não têm fim; renovam-se cada manhã. Grande é a tua fidelidade."
     };
 
-    // Encontrar o versículo que corresponde ao tema
     const temaLower = tema.toLowerCase();
     for (const [chave, versiculo] of Object.entries(mapaTemas)) {
       if (temaLower.includes(chave)) {
@@ -208,7 +198,6 @@ async function buscarVersiculoPorTema(tema) {
       }
     }
 
-    // Fallback: se não encontrar, buscar um versículo genérico
     return "João 14:27 - Deixo-vos a paz, a minha paz vos dou; não vo-la dou como o mundo a dá. Não se turbe o vosso coração, nem se atemorize.";
   } catch (err) {
     console.error("Erro ao buscar versículo:", err);
@@ -226,6 +215,7 @@ async function carregarCanais() {
     canais = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     atualizarDropdown();
     renderizarCanais();
+    atualizarBadgeCanalAtivo();
   } catch (err) { console.error("Erro ao carregar canais:", err); }
 }
 
@@ -258,19 +248,42 @@ function renderizarCanais() {
     div.className = "item-canal";
     const m = { manha_disposicao: "Manhã", madrugada_ansiedade: "Madrugada", noite_sono: "Noite" }[c.momento] || "";
     const i = { "pt-BR": "Português", "en-US": "Inglês", "es-LA": "Espanhol", "fr": "Francês", "ko": "Coreano" }[c.idioma] || "";
+    const url = c.url || "";
+    const urlDisplay = url ? `<div class="item-meta" style="font-size:0.75rem;color:var(--texto-fraco);">🔗 ${url}</div>` : "";
+    
     div.innerHTML = `
       <div>
         <div class="item-titulo">${c.nome}</div>
         <div class="item-meta">${m} · ${i}</div>
+        ${urlDisplay}
       </div>
-      <button class="btn btn-ghost btn-sm btn-excluir-canal" data-id="${c.id}">🗑️</button>
+      <div class="item-acoes">
+        <button class="btn btn-ghost btn-sm btn-editar-canal" data-id="${c.id}" title="Editar">✏️</button>
+        <button class="btn btn-ghost btn-sm btn-acessar-canal" data-url="${url}" title="Acessar canal" ${!url ? 'disabled' : ''}>🔗</button>
+        <button class="btn btn-ghost btn-sm btn-excluir-canal" data-id="${c.id}" title="Excluir">🗑️</button>
+      </div>
     `;
     container.appendChild(div);
   }
+
   document.querySelectorAll(".btn-excluir-canal").forEach(btn => {
     btn.addEventListener("click", async () => {
       const id = btn.dataset.id;
       if (confirm("Excluir canal e todo o histórico?")) await excluirCanal(id);
+    });
+  });
+
+  document.querySelectorAll(".btn-editar-canal").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const id = btn.dataset.id;
+      abrirModalEdicao(id);
+    });
+  });
+
+  document.querySelectorAll(".btn-acessar-canal").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const url = btn.dataset.url;
+      if (url) window.open(url, "_blank");
     });
   });
 }
@@ -294,25 +307,133 @@ async function excluirCanal(canalId) {
   }
 }
 
-document.getElementById("btn-criar-canal").addEventListener("click", async () => {
-  const nome = document.getElementById("input-nome-canal").value.trim();
-  const momento = document.getElementById("select-momento-canal").value;
-  const idioma = document.getElementById("select-idioma-canal").value;
-  const status = document.getElementById("status-canal");
+// ============================================================
+// MODAL DE EDIÇÃO DE CANAL
+// ============================================================
+function abrirModalEdicao(canalId) {
+  const canal = canais.find(c => c.id === canalId);
+  if (!canal) return;
+  
+  canalEmEdicao = canalId;
+  document.getElementById("edit-canal-id").value = canalId;
+  document.getElementById("edit-nome-canal").value = canal.nome || "";
+  document.getElementById("edit-momento-canal").value = canal.momento || "manha_disposicao";
+  document.getElementById("edit-idioma-canal").value = canal.idioma || "pt-BR";
+  document.getElementById("edit-url-canal").value = canal.url || "";
+  
+  document.getElementById("modal-editar-canal").classList.remove("oculto");
+  document.getElementById("status-edicao").textContent = "";
+  document.getElementById("status-edicao").className = "status";
+}
+
+document.getElementById("btn-fechar-modal").addEventListener("click", () => {
+  document.getElementById("modal-editar-canal").classList.add("oculto");
+  canalEmEdicao = null;
+});
+
+document.getElementById("btn-salvar-edicao").addEventListener("click", async () => {
+  const id = document.getElementById("edit-canal-id").value;
+  const nome = document.getElementById("edit-nome-canal").value.trim();
+  const momento = document.getElementById("edit-momento-canal").value;
+  const idioma = document.getElementById("edit-idioma-canal").value;
+  const url = document.getElementById("edit-url-canal").value.trim();
+  const status = document.getElementById("status-edicao");
+  
   if (!nome) { status.textContent = "Digite um nome."; status.className = "status erro"; return; }
+  
   try {
-    await addDoc(collection(db, "canais"), { nome, momento, idioma, criadoEm: serverTimestamp(), ativo: true });
-    status.textContent = "✅ Canal criado!";
+    await updateDoc(doc(db, "canais", id), {
+      nome,
+      momento,
+      idioma,
+      url: url || null
+    });
+    status.textContent = "✅ Canal atualizado!";
     status.className = "status sucesso";
-    document.getElementById("input-nome-canal").value = "";
+    document.getElementById("modal-editar-canal").classList.add("oculto");
+    canalEmEdicao = null;
     await carregarCanais();
+    await carregarHistorico(null, true);
   } catch (err) {
-    status.textContent = "Erro ao criar.";
+    status.textContent = "Erro ao atualizar: " + err.message;
     status.className = "status erro";
   }
 });
 
+// ============================================================
+// CRIAR CANAL
+// ============================================================
+document.getElementById("btn-criar-canal").addEventListener("click", async () => {
+  const nome = document.getElementById("input-nome-canal").value.trim();
+  const momento = document.getElementById("select-momento-canal").value;
+  const idioma = document.getElementById("select-idioma-canal").value;
+  const url = document.getElementById("input-url-canal").value.trim();
+  const status = document.getElementById("status-canal");
+  const btnTexto = document.getElementById("btn-criar-texto");
+  const btnSpinner = document.getElementById("btn-criar-spinner");
+  
+  if (!nome) { status.textContent = "Digite um nome."; status.className = "status erro"; return; }
+  
+  btnTexto.textContent = "Criando...";
+  btnSpinner.classList.remove("oculto");
+  status.textContent = "";
+  
+  try {
+    await addDoc(collection(db, "canais"), { 
+      nome, 
+      momento, 
+      idioma, 
+      url: url || null,
+      criadoEm: serverTimestamp(), 
+      ativo: true 
+    });
+    status.textContent = "✅ Canal criado!";
+    status.className = "status sucesso";
+    document.getElementById("input-nome-canal").value = "";
+    document.getElementById("input-url-canal").value = "";
+    await carregarCanais();
+  } catch (err) {
+    status.textContent = "Erro ao criar.";
+    status.className = "status erro";
+  } finally {
+    btnTexto.textContent = "Criar canal";
+    btnSpinner.classList.add("oculto");
+  }
+});
+
 document.getElementById("btn-recarregar-canais").addEventListener("click", carregarCanais);
+
+// ============================================================
+// BADGE CANAL ATIVO
+// ============================================================
+function atualizarBadgeCanalAtivo() {
+  const select = document.getElementById("select-canal");
+  const canalId = select.value;
+  const nomeEl = document.getElementById("canal-ativo-nome");
+  const momentoEl = document.getElementById("canal-ativo-momento");
+  const idiomaEl = document.getElementById("canal-ativo-idioma");
+  
+  if (!canalId || !canais.length) {
+    nomeEl.textContent = "Nenhum canal selecionado";
+    momentoEl.textContent = "—";
+    idiomaEl.textContent = "—";
+    return;
+  }
+  
+  const canal = canais.find(c => c.id === canalId);
+  if (!canal) {
+    nomeEl.textContent = "Canal não encontrado";
+    momentoEl.textContent = "—";
+    idiomaEl.textContent = "—";
+    return;
+  }
+  
+  nomeEl.textContent = canal.nome;
+  const m = { manha_disposicao: "🌅 Manhã", madrugada_ansiedade: "🌙 Madrugada", noite_sono: "🌙 Noite" }[canal.momento] || canal.momento;
+  momentoEl.textContent = m;
+  const i = { "pt-BR": "🇧🇷 PT", "en-US": "🇺🇸 EN", "es-LA": "🇪🇸 ES", "fr": "🇫🇷 FR", "ko": "🇰🇷 KO" }[canal.idioma] || canal.idioma;
+  idiomaEl.textContent = i;
+}
 
 // ============================================================
 // CHAMADA DA API (GPT-4o VIA CLOUD FUNCTION)
@@ -347,17 +468,8 @@ async function gerarTituloComIA(canalId, forcarNovo = false) {
     const tituloEscolhido = titulos[Math.floor(Math.random() * titulos.length)];
     const arquétipo = "IA-GPT4o";
 
-    await addDoc(collection(db, "historico"), {
-      canalId: canalId,
-      titulo: tituloEscolhido,
-      status: "rascunho",
-      padrao_usado: arquétipo,
-      palavras_chave: [],
-      criadoEm: serverTimestamp(),
-      momento: canal.momento,
-      idioma: canal.idioma,
-      fonte: "GPT-4o"
-    });
+    // NÃO SALVA MAIS AUTOMATICAMENTE — só retorna o título
+    // O salvamento agora é feito pelo botão "Salvar Título"
 
     return { titulo: tituloEscolhido, arquétipo, todos: titulos };
 
@@ -374,6 +486,34 @@ async function gerarTituloComIA(canalId, forcarNovo = false) {
       mensagem += error.message || "Tente novamente mais tarde.";
     }
     throw new Error(mensagem);
+  }
+}
+
+// ============================================================
+// SALVAR TÍTULO MANUALMENTE
+// ============================================================
+async function salvarTitulo(canalId, titulo, arquétipo) {
+  try {
+    const canal = canais.find(c => c.id === canalId);
+    if (!canal) throw new Error("Canal não encontrado.");
+
+    const docRef = await addDoc(collection(db, "historico"), {
+      canalId: canalId,
+      titulo: titulo,
+      status: "salvo",
+      padrao_usado: arquétipo || "IA-GPT4o",
+      palavras_chave: [],
+      criadoEm: serverTimestamp(),
+      momento: canal.momento,
+      idioma: canal.idioma,
+      fonte: "GPT-4o"
+    });
+
+    tituloSalvoId = docRef.id;
+    return docRef.id;
+  } catch (error) {
+    console.error("❌ Erro ao salvar título:", error);
+    throw new Error("Erro ao salvar título: " + error.message);
   }
 }
 
@@ -465,7 +605,6 @@ Se o total geral passar de ${params.palavrasMax} palavras, corte o excesso sem p
 
   texto += "\n" + (inst.final_output || "📤 SAÍDA FINAL\n\nExecute todas as regras acima e entregue apenas o roteiro final.\n\nAgora, escreva o roteiro para o título: <<TITULO>>").replace("<<TITULO>>", params.titulo);
 
-  // Substituir placeholders numéricos
   const substitutos = {
     "<<MINUTOS>>": String(params.minutos),
     "<<PPM>>": String(params.ppm),
@@ -563,11 +702,12 @@ async function carregarHistorico(canalId = null, reiniciar = false) {
       const dataFormatada = r.criadoEm?.toDate?.()?.toLocaleString?.("pt-BR") || "—";
       const momentoLabel = r.momento || "—";
       const idiomaLabel = r.idioma || "—";
-      const duracaoTexto = r.minutos ? `${r.minutos} min (${r.palavras_alvo || "?"} palabras) · ` : "";
+      const duracaoTexto = r.minutos ? `${r.minutos} min (${r.palavras_alvo || "?"} palavras) · ` : "";
+      const statusLabel = r.status === "salvo" ? "✅" : r.status === "rascunho" ? "📝" : "—";
       item.innerHTML = `
         <div>
-          <div class="item-titulo">${escaparHtml(r.titulo || "(sem título)")}</div>
-          <div class="item-meta">${dataFormatada} · ${duracaoTexto}${momentoLabel} · ${idiomaLabel} · anáfora ${r.limite_anafora ?? "—"} · arquétipos: ${escaparHtml((r.arquetipos_usados || []).join(", "))}</div>
+          <div class="item-titulo">${statusLabel} ${escaparHtml(r.titulo || "(sem título)")}</div>
+          <div class="item-meta">${dataFormatada} · ${duracaoTexto}${momentoLabel} · ${idiomaLabel} · anáfora ${r.limite_anafora ?? "—"}</div>
         </div>
       `;
       lista.appendChild(item);
@@ -603,6 +743,8 @@ document.getElementById("btn-mais-historico").addEventListener("click", () => {
 const inputTitulo = document.getElementById("input-titulo");
 const selectCanal = document.getElementById("select-canal");
 const btnGerar = document.getElementById("btn-gerar");
+const btnGerarTexto = document.getElementById("btn-gerar-texto");
+const btnGerarSpinner = document.getElementById("btn-gerar-spinner");
 const statusGerar = document.getElementById("status-gerar");
 const cartaoResultado = document.getElementById("cartao-resultado");
 const resultadoPrompt = document.getElementById("resultado-prompt");
@@ -611,9 +753,14 @@ const btnCopiar = document.getElementById("btn-copiar");
 const cartaoRevisao = document.getElementById("cartao-revisao");
 const resultadoRevisao = document.getElementById("resultado-revisao");
 const btnCopiarRevisao = document.getElementById("btn-copiar-revisao");
+const statusTituloSalvo = document.getElementById("status-titulo-salvo");
 
 selectCanal.addEventListener("change", () => {
   carregarHistorico(selectCanal.value, true);
+  atualizarBadgeCanalAtivo();
+  // Resetar status do título ao trocar de canal
+  statusTituloSalvo.style.display = "none";
+  tituloSalvoId = null;
 });
 
 // ============================================================
@@ -630,6 +777,8 @@ document.getElementById("btn-gerar-titulo").addEventListener("click", async () =
   statusGerar.textContent = "⏳ Gerando títulos com IA...";
   statusGerar.className = "status";
   btnGerar.disabled = true;
+  statusTituloSalvo.style.display = "none";
+  tituloSalvoId = null;
 
   try {
     const result = await gerarTituloComIA(canalId, false);
@@ -639,7 +788,7 @@ document.getElementById("btn-gerar-titulo").addEventListener("click", async () =
     document.getElementById("badge-arquetipo").textContent = "GPT-4o";
     const totalVideos = await getTotalVideosCanal(canalId);
     document.getElementById("video-counter").textContent = `Vídeo #${totalVideos + 1}`;
-    statusGerar.textContent = `✅ Título gerado com GPT-4o: "${result.titulo}"`;
+    statusGerar.textContent = `✅ Título gerado: "${result.titulo}" (clique em 💾 Salvar para guardar)`;
     statusGerar.className = "status sucesso";
   } catch (err) {
     console.error(err);
@@ -661,24 +810,16 @@ document.getElementById("btn-refazer-titulo").addEventListener("click", async ()
   statusGerar.textContent = "⏳ Gerando novo título com IA...";
   statusGerar.className = "status";
   btnGerar.disabled = true;
+  statusTituloSalvo.style.display = "none";
+  tituloSalvoId = null;
 
   try {
-    const q = query(
-      collection(db, "historico"),
-      where("canalId", "==", canalId),
-      where("status", "==", "rascunho"),
-      orderBy("criadoEm", "desc"),
-      limit(1)
-    );
-    const snap = await getDocs(q);
-    if (!snap.empty) await deleteDoc(snap.docs[0].ref);
-    
     const result = await gerarTituloComIA(canalId, true);
     ultimoTituloGerado = result.titulo;
     ultimoArquetipo = result.arquétipo;
     inputTitulo.value = result.titulo;
     document.getElementById("badge-arquetipo").textContent = "GPT-4o";
-    statusGerar.textContent = `🔄 Novo título gerado: "${result.titulo}"`;
+    statusGerar.textContent = `🔄 Novo título gerado: "${result.titulo}" (clique em 💾 Salvar para guardar)`;
     statusGerar.className = "status sucesso";
   } catch (err) {
     console.error(err);
@@ -686,6 +827,39 @@ document.getElementById("btn-refazer-titulo").addEventListener("click", async ()
     statusGerar.className = "status erro";
   } finally {
     btnGerar.disabled = false;
+  }
+});
+
+// ============================================================
+// SALVAR TÍTULO (BOTÃO)
+// ============================================================
+document.getElementById("btn-salvar-titulo").addEventListener("click", async () => {
+  const canalId = selectCanal.value;
+  const titulo = inputTitulo.value.trim();
+  
+  if (!canalId) {
+    statusGerar.textContent = "⚠️ Selecione um canal primeiro.";
+    statusGerar.className = "status erro";
+    return;
+  }
+  
+  if (!titulo) {
+    statusGerar.textContent = "⚠️ Gere ou digite um título primeiro.";
+    statusGerar.className = "status erro";
+    return;
+  }
+  
+  try {
+    await salvarTitulo(canalId, titulo, ultimoArquetipo || "manual");
+    statusTituloSalvo.style.display = "inline";
+    statusGerar.textContent = `✅ Título salvo com sucesso!`;
+    statusGerar.className = "status sucesso";
+    await carregarHistorico(canalId, true);
+    const totalVideos = await getTotalVideosCanal(canalId);
+    document.getElementById("video-counter").textContent = `Vídeo #${totalVideos}`;
+  } catch (err) {
+    statusGerar.textContent = `❌ ${err.message}`;
+    statusGerar.className = "status erro";
   }
 });
 
@@ -702,7 +876,7 @@ btnGerar.addEventListener("click", async () => {
   const titulo = inputTitulo.value.trim();
   const canalId = selectCanal.value;
   const minutos = parseFloat(document.getElementById("input-minutos").value);
-  const ppm = parseFloat(document.getElementById("input-ppm").value) || PPM_PADRAO;
+  const ppm = PPM_PADRAO;
 
   if (!titulo) { statusGerar.textContent = "⚠️ Gere ou digite um título primeiro."; statusGerar.className = "status erro"; return; }
   if (!canalId) { statusGerar.textContent = "⚠️ Selecione um canal."; statusGerar.className = "status erro"; return; }
@@ -710,6 +884,8 @@ btnGerar.addEventListener("click", async () => {
   if (!traducoes || !systemPrompts) { statusGerar.textContent = "⚠️ Dados não carregados."; statusGerar.className = "status erro"; return; }
 
   btnGerar.disabled = true;
+  btnGerarTexto.textContent = "Gerando...";
+  btnGerarSpinner.classList.remove("oculto");
   statusGerar.textContent = "⏳ Gerando prompt...";
   statusGerar.className = "status";
 
@@ -770,9 +946,6 @@ btnGerar.addEventListener("click", async () => {
 
     const promptFinal = montarPrompt(params, langData, templateBlocos);
 
-    // ============================================================
-    // BUSCAR VERSÍCULO POR TEMA E SUBSTITUIR NO PROMPT
-    // ============================================================
     const tema = titulo.toLowerCase();
     const versiculo = await buscarVersiculoPorTema(tema);
     const promptComVersiculos = promptFinal.replace(/\{\{VERSICULO\}\}/g, versiculo);
@@ -788,21 +961,6 @@ btnGerar.addEventListener("click", async () => {
     resultadoRevisao.value = revisao;
     cartaoRevisao.classList.remove("oculto");
 
-    // Atualizar status do título para "pronto"
-    if (ultimoTituloGerado) {
-      const qUpdate = query(
-        collection(db, "historico"),
-        where("canalId", "==", canalId),
-        where("titulo", "==", ultimoTituloGerado),
-        where("status", "==", "rascunho"),
-        limit(1)
-      );
-      const snapUpdate = await getDocs(qUpdate);
-      if (!snapUpdate.empty) {
-        await setDoc(snapUpdate.docs[0].ref, { status: "pronto" }, { merge: true });
-      }
-    }
-
     statusGerar.textContent = "✅ Prompt gerado com sucesso! (Versículos incluídos)";
     statusGerar.className = "status sucesso";
     carregarHistorico(canalId, true);
@@ -812,19 +970,21 @@ btnGerar.addEventListener("click", async () => {
     statusGerar.className = "status erro";
   } finally {
     btnGerar.disabled = false;
+    btnGerarTexto.textContent = "🚀 Gerar Prompt";
+    btnGerarSpinner.classList.add("oculto");
   }
 });
 
 btnCopiar.addEventListener("click", async () => {
   try { await navigator.clipboard.writeText(resultadoPrompt.value); btnCopiar.textContent = "Copiado!"; }
   catch { resultadoPrompt.select(); document.execCommand("copy"); btnCopiar.textContent = "Copiado!"; }
-  setTimeout(() => { btnCopiar.textContent = "Copiar"; }, 1500);
+  setTimeout(() => { btnCopiar.textContent = "📄 Copiar"; }, 1500);
 });
 
 btnCopiarRevisao.addEventListener("click", async () => {
   try { await navigator.clipboard.writeText(resultadoRevisao.value); btnCopiarRevisao.textContent = "Copiado!"; }
   catch { resultadoRevisao.select(); document.execCommand("copy"); btnCopiarRevisao.textContent = "Copiado!"; }
-  setTimeout(() => { btnCopiarRevisao.textContent = "Copiar"; }, 1500);
+  setTimeout(() => { btnCopiarRevisao.textContent = "📄 Copiar"; }, 1500);
 });
 
 // ============================================================
@@ -839,8 +999,10 @@ function formatarParagrafos(texto, maxFrasesPorParagrafo = 3) {
   const paragrafosOriginais = texto.split(/\n+/).map((p) => p.trim()).filter(Boolean);
   const paragrafosFinais = [];
   let totalAjustados = 0;
+  let totalPalavras = 0;
   for (const paragrafo of paragrafosOriginais) {
     const frases = dividirEmFrases(paragrafo);
+    totalPalavras += paragrafo.split(/\s+/).length;
     if (frases.length <= maxFrasesPorParagrafo) {
       paragrafosFinais.push(paragrafo);
       continue;
@@ -850,7 +1012,7 @@ function formatarParagrafos(texto, maxFrasesPorParagrafo = 3) {
       paragrafosFinais.push(frases.slice(i, i + maxFrasesPorParagrafo).join(" "));
     }
   }
-  return { textoFormatado: paragrafosFinais.join("\n"), totalAjustados, totalParagrafosOriginais: paragrafosOriginais.length };
+  return { textoFormatado: paragrafosFinais.join("\n"), totalAjustados, totalParagrafosOriginais: paragrafosOriginais.length, totalPalavras };
 }
 
 const entradaFormatar = document.getElementById("entrada-formatar");
@@ -859,13 +1021,15 @@ const statusFormatar = document.getElementById("status-formatar");
 const cartaoFormatado = document.getElementById("cartao-formatado");
 const resultadoFormatado = document.getElementById("resultado-formatado");
 const btnCopiarFormatado = document.getElementById("btn-copiar-formatado");
+const contagemPalavras = document.getElementById("contagem-palavras");
 
 btnFormatar.addEventListener("click", () => {
   const texto = entradaFormatar.value.trim();
   if (!texto) { statusFormatar.textContent = "Cole o roteiro."; statusFormatar.className = "status erro"; return; }
-  const { textoFormatado, totalAjustados, totalParagrafosOriginais } = formatarParagrafos(texto);
+  const { textoFormatado, totalAjustados, totalParagrafosOriginais, totalPalavras } = formatarParagrafos(texto);
   resultadoFormatado.value = textoFormatado;
   cartaoFormatado.classList.remove("oculto");
+  contagemPalavras.textContent = `📊 Palavras: ${totalPalavras}`;
   statusFormatar.textContent = totalAjustados > 0 ? `${totalAjustados} de ${totalParagrafosOriginais} ajustados.` : "Nenhum parágrafo com mais de 3 frases.";
   statusFormatar.className = "status sucesso";
 });
@@ -873,7 +1037,7 @@ btnFormatar.addEventListener("click", () => {
 btnCopiarFormatado.addEventListener("click", async () => {
   try { await navigator.clipboard.writeText(resultadoFormatado.value); btnCopiarFormatado.textContent = "Copiado!"; }
   catch { resultadoFormatado.select(); document.execCommand("copy"); btnCopiarFormatado.textContent = "Copiado!"; }
-  setTimeout(() => { btnCopiarFormatado.textContent = "Copiar"; }, 1500);
+  setTimeout(() => { btnCopiarFormatado.textContent = "📄 Copiar"; }, 1500);
 });
 
 // ============================================================
@@ -894,4 +1058,14 @@ document.querySelectorAll(".aba").forEach((botao) => {
   });
 });
 
-console.log("✅ Faith Prompt Engine carregado (com versículos automáticos)!");
+// ============================================================
+// CLIQUE FORA DO MODAL PARA FECHAR
+// ============================================================
+document.getElementById("modal-editar-canal").addEventListener("click", (e) => {
+  if (e.target === document.getElementById("modal-editar-canal")) {
+    document.getElementById("modal-editar-canal").classList.add("oculto");
+    canalEmEdicao = null;
+  }
+});
+
+console.log("✅ Faith Prompt Engine carregado (com versículos automáticos e otimizações)!");
