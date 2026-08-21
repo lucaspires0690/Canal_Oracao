@@ -1,7 +1,7 @@
 {
   "meta": {
     "version": "2.0.0",
-    "generated_at": "2026-08-20T16:00:00Z",
+    "generated_at": "2026-08-21T08:00:00Z",
     "purpose": "Templates de roteiro para diferentes momentos e dores"
   },
   "templates": {
@@ -11,14 +11,19 @@
       "target_emotion": "Medo/Ansiedade",
       "duration": "10-12 minutos",
       "tone": "Calmo, acolhedor, compassivo, como um amigo que segura sua mão",
+      "timeline": {
+        "focus": "PRESENTE ('agora', 'neste momento') e PASSADO como contexto ('ontem', 'noite passada')",
+        "blessing": "Volte a dormir em paz / Entregue sua ansiedade agora / Descanse no amor de Deus",
+        "forbidden": "Bênçãos matinais ou noturnas que não sejam de alívio imediato"
+      },
       "structure": {
-        "B1": "GANCHO FÍSICO: Descrever a sensação física (coração acelerado, falta de ar, silêncio da madrugada). Primeira frase: máximo 8 palavras.",
+        "B1": "GANCHO FÍSICO: Descrever a sensação física (coração acelerado, falta de ar, silêncio da madrugada). Primeira frase: máximo 8 palavras. Use PRESENTE ('agora', 'neste silêncio').",
         "B2": "ACOLHIMENTO: Validar a dor. 'Eu sei que você está acordado agora, que seu coração está acelerado. Respira fundo comigo...'",
         "B3": "ORAÇÃO PRINCIPAL: 'Senhor, eu entrego essa ansiedade em Tuas mãos. Acalma meu coração, tira esse peso do meu peito...' **ESCREVA AQUI O VERSÍCULO COMPLETO (TEXTO + REFERÊNCIA). NÃO USE {{VERSICULO}}.**",
         "B4": "VIRADA: 'Ansiedade não é falta de fé, às vezes é só cansaço da alma.'",
         "B5": "TENSÃO HONESTA: 'Sei que as tempestades vêm. Sei que há dias em que parece que tudo vai desmoronar.'",
-        "B6": "PROMESSA: 'Filipenses 4:7 - A paz de Deus, que excede todo entendimento, guardará seu coração.' **ESCREVA AQUI O VERSÍCULO COMPLETO (TEXTO + REFERÊNCIA). NÃO USE {{VERSICULO}}.**",
-        "B7": "ENCERRAMENTO: 'Agora, durma em paz. Deus está cuidando de você. Amém.'"
+        "B6": "PROMESSA: 'Salmo 91 - Aquele que habita no esconderijo do Altíssimo...' **ESCREVA AQUI O VERSÍCULO COMPLETO (TEXTO + REFERÊNCIA). NÃO USE {{VERSICULO}}.**",
+        "B7": "ENCERRAMENTO: 'Agora, durma em paz. Deus está cuidando de você. Amém.' (NUNCA use bênçãos matinais ou de 'bom dia')."
       },
       "example_title": "Acordou com o Coração Disparado na Madrugada? Ore Isso e Volte a Dormir"
     },
@@ -28,14 +33,19 @@
       "target_emotion": "Falta de disposição/direção",
       "duration": "15-20 minutos",
       "tone": "Energético, motivacional, firme mas suave",
+      "timeline": {
+        "focus": "PRESENTE ('agora', 'hoje', 'neste despertar') e FUTURO ('este dia', 'amanhã')",
+        "blessing": "Tenha um dia abençoado / Desperte com força / Vá em paz e confie",
+        "forbidden": "Durma bem / Descanse esta noite / Boa noite"
+      },
       "structure": {
-        "B1": "GANCHO DE AÇÃO: 'Comece o dia com a atitude certa...'",
+        "B1": "GANCHO DE AÇÃO: 'Comece o dia com a atitude certa...' Use PRESENTE ('hoje', 'agora'). NUNCA encerre com bênção noturna.",
         "B2": "CONTEXTO: 'Hoje você vai enfrentar desafios, mas não está sozinho...'",
         "B3": "ORAÇÃO E MOTIVAÇÃO: 'Senhor, dá-me força para enfrentar este dia...' **ESCREVA AQUI O VERSÍCULO COMPLETO (TEXTO + REFERÊNCIA). NÃO USE {{VERSICULO}}.**",
         "B4": "VIRADA: 'O mundo diz que você não vai conseguir, mas Deus diz que você pode tudo naquele que te fortalece.'",
         "B5": "TENSÃO HONESTA: 'Sim, haverá dificuldades. Mas a fé é maior que o medo.'",
         "B6": "PROMESSA: 'Isaías 40:31 - Os que esperam no Senhor renovam as suas forças.' **ESCREVA AQUI O VERSÍCULO COMPLETO (TEXTO + REFERÊNCIA). NÃO USE {{VERSICULO}}.**",
-        "B7": "ENCERRAMENTO: 'Vá e tenha um dia abençoado. Deus está com você.'"
+        "B7": "ENCERRAMENTO: 'Vá e tenha um dia abençoado. Deus está com você.' (NUNCA use 'durma bem' ou 'boa noite')."
       },
       "example_title": "Comece o Dia com o Pé Direito: Esta Oração Vai Mudar Sua Manhã"
     },
@@ -45,14 +55,19 @@
       "target_emotion": "Sono agitado/Insônia leve",
       "duration": "30-40 minutos (ou 3h+ para sleep talk)",
       "tone": "Suave, relaxante, poético, quase hipnótico",
+      "timeline": {
+        "focus": "PRESENTE ('agora', 'ao deitar') e FUTURO ('durante a noite', 'amanhã')",
+        "blessing": "Durma em paz / Descanse sob a proteção de Deus / Boa noite",
+        "forbidden": "Tenha um bom dia / Desperte com energia / Bom dia"
+      },
       "structure": {
-        "B1": "GANCHO DE DESACELERAÇÃO: 'O dia acabou, está na hora de entregar o peso...'",
+        "B1": "GANCHO DE DESACELERAÇÃO: 'O dia acabou, está na hora de entregar o peso...' Use PRESENTE ('agora', 'ao deitar') e PASSADO como contexto ('hoje', 'neste dia').",
         "B2": "RELAXAMENTO: 'Sinta seu corpo relaxar, feche os olhos...'",
         "B3": "ORAÇÃO DE ENTREGA: 'Senhor, eu entrego todas as preocupações deste dia em Tuas mãos...' **ESCREVA AQUI O VERSÍCULO COMPLETO (TEXTO + REFERÊNCIA). NÃO USE {{VERSICULO}}.**",
         "B4": "VIRADA: 'O descanso não é fraqueza, é confiança em Deus.'",
         "B5": "TENSÃO HONESTA: 'Sei que há lutas que parecem não ter fim, mas a fé nos sustenta.'",
         "B6": "PROMESSA: 'Salmo 4:8 - Em paz me deito e logo adormeço, pois só tu, Senhor, me fazes habitar em segurança.' **ESCREVA AQUI O VERSÍCULO COMPLETO (TEXTO + REFERÊNCIA). NÃO USE {{VERSICULO}}.**",
-        "B7": "ENCERRAMENTO: 'Durma em paz. Amanhã é um novo dia. Amém.'"
+        "B7": "ENCERRAMENTO: 'Durma em paz. Amanhã é um novo dia. Amém.' (NUNCA use 'tenha um bom dia' ou 'desperte com energia')."
       },
       "example_title": "Descanse em Paz: Esta Oração Vai Acalmar a Sua Noite"
     }
@@ -67,6 +82,7 @@
     "O Bloco 3 (Oração Principal) deve conter O VERSÍCULO COMPLETO (NÃO use placeholders).",
     "O Bloco 6 (Promessa) deve conter O VERSÍCULO COMPLETO (NÃO use placeholders).",
     "O tom deve ser escolhido com base no momento: Madrugada = calmo, Manhã = energético, Noite = suave.",
+    "A bênção final deve respeitar a LINHA DO TEMPO: Manhã = bênção para o dia, Noite = bênção para o sono, Madrugada = alívio imediato.",
     "Nunca usar palavras de Hype (Anticristo, CERN, etc.) no roteiro."
   ]
 }
